@@ -81,8 +81,8 @@ The ingestion pipeline is implemented in `src/rag_pipeline/ingestion_pipeline.py
 ## Prerequisites
 
 - **Python 3.10+**
-- **[uv](https://docs.astral.sh/uv/)** (recommended) or `pip`
-- An **OpenAI-compatible embeddings endpoint** (API key, base URL, model name)
+- **[uv](https://docs.astral.sh/uv/)** (recommended)
+- An **OpenAI-compatible embeddings endpoint** (e.g. OpenAI or OpenRouter) with API key, base URL, and model name
 - A **ChromaDB Cloud** setup (API key, tenant ID, database name, collection name)
 - One or more `.txt` files in the `docs/` directory
 
@@ -93,24 +93,24 @@ The ingestion pipeline is implemented in `src/rag_pipeline/ingestion_pipeline.py
 ### 1. Clone the repository
 
 ```bash
-git clone <your-repo-url>
-cd rag-pipeline
+git clone https://github.com/yasasbanukaofficial/battlex-rag-pipeline.git
+cd battlex-rag-pipeline
 ```
 
-### 2. Install dependencies
+### 2. Set up the environment and install dependencies
 
-#### Option A: Using `uv` (recommended)
+#### Option A: Quick setup with `uv sync` (recommended)
 
 ```bash
 uv sync
 ```
 
-#### Option B: Using `pip`
+#### Option B: Manual setup with `uv`
 
 ```bash
-python -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-pip install -e .
+uv venv .venv
+source .venv/bin/activate  # On Windows (PowerShell): .venv\Scripts\Activate.ps1
+uv sync
 ```
 
 ### 3. Configure environment variables
@@ -120,6 +120,8 @@ Copy the sample file and fill in your values:
 ```bash
 cp .env.sample .env
 ```
+
+Update `.env` with your embeddings provider settings (OpenAI, OpenRouter, or another OpenAI-compatible provider) and ChromaDB Cloud credentials.
 
 ### 4. Add source documents
 
@@ -160,7 +162,7 @@ python -m rag_pipeline.ingestion_pipeline
 
 | Variable | Required | Description |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | API key for the embeddings provider |
+| `OPENAI_API_KEY` | Yes | API key for the embeddings provider (OpenAI, OpenRouter, or compatible) |
 | `OPENAI_API_URL` | Yes | Base URL for the OpenAI-compatible embeddings API |
 | `EMBEDDING_MODEL` | Yes | Embedding model identifier/name |
 | `CHROMA_API_KEY` | Yes | ChromaDB Cloud API key |
