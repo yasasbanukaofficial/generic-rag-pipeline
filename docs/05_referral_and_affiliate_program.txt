@@ -1,0 +1,102 @@
+================================================================================
+BATTLEX PLATFORM - REFERRAL AND AFFILIATE PROGRAM
+================================================================================
+
+1. REFERRAL MECHANISM AND BINDING RULES
+--------------------------------------------------------------------------------
+BATTLEX features a multi-tier affiliate referral system designed to incentivize
+organic player acquisition and community growth.
+
+A. Binding Rules:
+   - Registration Binding: When a user registers using an affiliate invite link
+     (e.g. `https://battlex.com/register?ref=BX1234`), the referrer is bound
+     immediately within the atomic user registration transaction.
+   - Post-Registration Grace Period: If a user registers without a referral link,
+     they have up to 7 calendar days to manually enter a referral code in their
+     profile settings, provided they have NOT yet played any staked games.
+   - Strict Immutability: Once a referral link is established, it can never be
+     changed, reassigned, or deleted.
+   - Loop & Self-Referral Prevention: The system strictly validates that a user
+     cannot refer themselves, nor can any circular loops be formed at any depth
+     (e.g. A -> B -> C -> A is rejected).
+
+
+2. COMMISSION STRUCTURE (THE 50/50 WINNER/LOSER SPLIT)
+--------------------------------------------------------------------------------
+Commissions are funded out of the platform's 10% game fee (never deducted from the
+player's won pot).
+
+A. Two Earning Streams:
+   1. Unilevel Affiliate Commissions (10% of total fee):
+      - Level 1 (Direct Referrer): 4% of total fee
+      - Level 2 (Referrer's Referrer): 3% of total fee
+      - Level 3: 2% of total fee
+      - Level 4: 1% of total fee
+   2. Direct Referral Bonus (5% of total fee):
+      - Paid directly to the Level 1 referrers of the participants.
+
+B. The 50/50 Side Allocation:
+   In every completed staked game, the commission for each unilevel tier and the
+   direct referral bonus is split 50/50 between:
+   - 50% allocated to the Winner's upline chain.
+   - 50% allocated across the Non-Winner (Loser) upline chains.
+
+   Why this design matters:
+   - It rewards affiliates whose invited players play games, regardless of whether
+     their player wins or loses!
+   - In 2-player games (Chess, Checkers), the non-winner 50% goes entirely to the loser's upline.
+   - In multi-seat games (3 or 4-player Ludo), the non-winner 50% is divided equally among
+     the uplines of all non-winning players at that level, rounded down to micro-coins.
+
+
+3. WORKED EXAMPLE (500-COIN MATCH, 50-COIN FEE)
+--------------------------------------------------------------------------------
+Consider a 2-player game with a 500-coin pot (Fee = 50 coins = 50,000,000 micro-coins).
+Assuming both players have full 4-level uplines:
+
+Recipient Tier        Winner Side (50%)    Loser Side (50%)    Total Coins
+--------------------------------------------------------------------------------
+Level 1 (4% of fee)   1.00 coin            1.00 coin           2.00 coins
+Level 2 (3% of fee)   0.75 coins           0.75 coins          1.50 coins
+Level 3 (2% of fee)   0.50 coins           0.50 coins          1.00 coin
+Level 4 (1% of fee)   0.25 coins           0.25 coins          0.50 coins
+Direct Referral (5%)  1.25 coins           1.25 coins          2.50 coins
+--------------------------------------------------------------------------------
+Total Affiliate Paid: 3.75 coins           3.75 coins          7.50 coins
+
+Key Takeaway for Direct Referrers (L1):
+Each player's direct referrer receives:
+  L1 (1.00) + Direct Bonus (1.25) = 2.25 coins (4.5% of the total platform fee)!
+
+
+4. UNCLAIMED COMMISSIONS AND ROUNDING RESIDUALS
+--------------------------------------------------------------------------------
+- Missing Uplines: If a player was not referred by anyone, or their upline chain
+  stops at Level 1 or Level 2, the unearned higher-level commissions (L3, L4)
+  are NOT retained arbitrarily.
+- Soft-Deleted Accounts: If an upline account was soft-deleted, their share is forfeited.
+- Policy: All unclaimed affiliate commissions and micro-coin division residuals
+  are automatically swept into the Net Profit Pool, thereby increasing company
+  and director distributions.
+
+
+5. AFFILIATE LOCK AND KYC RELEASE WORKFLOW
+--------------------------------------------------------------------------------
+To prevent referral abuse, multi-account self-farming, and money laundering:
+
+A. The `affiliate_locked` Ledger Account:
+   - When a settlement produces affiliate earnings for a user, the system checks
+     the recipient's KYC verification status.
+   - If the recipient user has NOT completed KYC verification:
+     * The earned coins are credited to the user's `affiliate_locked` account.
+     * Locked coins cannot be staked in games, transferred to merchants, or withdrawn.
+
+B. Automated Ledger Release upon KYC Approval:
+   - As soon as platform administrators verify the user's KYC submission:
+     * An automated, idempotent ledger transaction is executed.
+     * All accumulated balances in `affiliate_locked` are debited and credited to `available`:
+         Debit:  `user.affiliate_locked` (-Balance)
+         Credit: `user.available`        (+Balance)
+   - Future affiliate earnings for that user immediately route directly to `available`.
+   - A background recovery sweep periodically verifies that any newly approved KYC users
+     have their locked balances swept without manual operator intervention.

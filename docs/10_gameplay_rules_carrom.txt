@@ -1,0 +1,107 @@
+================================================================================
+BATTLEX PLATFORM - GAMEPLAY RULES & ENGINE: CARROM
+================================================================================
+
+1. GAME OVERVIEW AND BOARD SPECIFICATION
+--------------------------------------------------------------------------------
+Carrom is a tabletop tabletop strike-and-pocket game popular across South Asia.
+In BATTLEX, Carrom is modeled via an internal deterministic 2D physics engine
+incorporating accurate friction, restitution, and collision mechanics.
+
+A. Board Layout:
+   - Square wooden playing surface enclosed by wooden bumpers (frame).
+   - 4 circular corner pockets with netting.
+   - 4 Baseline zones parallel to each side with circular baseline circles (cut circles).
+   - Concentric circles at the center of the board (center circle) where carrom men are racked.
+
+B. Equipment & Pieces:
+   - 9 White Carrom Men (Light)
+   - 9 Black Carrom Men (Dark)
+   - 1 Red Queen (highest value piece)
+   - 1 Striker (larger, heavier acrylic/smooth disc used to strike carrom men)
+
+C. Seating & Game Variants:
+   - Supported Variants in Engine:
+     * ICF (International Carrom Federation Standard): 2 players (White vs Black).
+     * FFA (Free-For-All Points): 2 or 4 players competing for total points.
+
+
+2. STRIKER POSITIONING AND SHOT LAUNCHING
+--------------------------------------------------------------------------------
+A. Baseline Positioning:
+   - The striker must be positioned touching both lines of the player's baseline.
+   - The striker must either touch both baseline circles or completely cover a baseline circle.
+   - The striker cannot be positioned outside the baseline boundaries.
+
+B. Striking Action & Physics Payload:
+   - The player launches the striker by specifying:
+     1. Position (`pos`): Coordinate along the baseline.
+     2. Angle (`angle`): Direction vector of the shot (in milliradians or fixed-point units).
+     3. Force / Impulse (`force`): Striking power applied to the striker.
+   - Action payload submitted to server:
+     ```json
+     {
+       "type": "strike",
+       "payload": {
+         "pos": 15000,
+         "angle": 45000,
+         "force": 80000
+       }
+     }
+     ```
+   - Server-Authoritative Physics Simulation:
+     * The server executes a fixed-step 2D physics simulation (`physics_simulation.go`).
+     * Simulates striker travel, rebounds off wooden rails, elastic collisions with carrom men,
+       piece-to-piece scattering, and pocket sinks.
+
+
+3. SCORING, QUEEN AND COVER RULES
+--------------------------------------------------------------------------------
+A. General Pocketing Rules:
+   - If a player pockets one of their own carrom men:
+     * They earn points and are awarded a continuation turn (they strike again).
+   - If a player fails to pocket any piece:
+     * The turn ends and passes to the next opponent.
+
+B. The Red Queen Rules:
+   - The Red Queen is the most valuable piece on the board.
+   - Requisite: The Queen can be pocketed at any time, but it MUST be "Covered"!
+   - The Cover Rule:
+     * After pocketing the Queen, the player MUST pocket another carrom man of their
+       own color either on the very same strike, or on their immediate next strike.
+     * If the player successfully covers the Queen:
+       The Queen is officially claimed by the player and remains in the pocket.
+     * If the player fails to cover the Queen on the next strike:
+       The Queen is Resotted (placed back into the center circle) and the turn ends!
+
+C. Respotting Mechanics:
+   - When pieces must return to the board (due to an uncovered Queen, foul penalty,
+     or piece knocked off the playing surface):
+   - Pieces are placed back in the center circle according to standard geometric respotting
+     rules (`respot.go`). If the center circle is occupied, pieces are placed touching it
+     along the opposite baseline axis.
+
+
+4. FOULS AND PENALTIES
+--------------------------------------------------------------------------------
+A. Common Fouls:
+   - Pocketing the Striker: If the striker falls into a pocket (scratch/due).
+   - Pocketing Opponent's Piece: If an opponent's piece is pocketed without pocketing own piece.
+   - Knocking a Piece Off the Board: If any piece flies out of the playing area.
+   - Illegal Striker Placement: Striking from outside the baseline.
+
+B. Penalties:
+   - A player who commits a foul incurs a penalty (a "Due").
+   - One previously pocketed carrom man of their own color must be returned from the pocket
+     and respotted in the center of the board.
+   - If the player has no pocketed pieces, the penalty is held as a debt and deducted
+     as soon as they pocket their next piece.
+   - The turn ends immediately upon committing a foul.
+
+
+5. VICTORY AND MATCH TERMINATION
+--------------------------------------------------------------------------------
+- In ICF standard match play, the player who clears all 9 of their designated pieces
+  after the Queen has been covered wins the board.
+- In staked matches, winning follows the platform standard 90/10 payout structure.
+- If a player resigns or disconnects beyond grace, the match is awarded to the remaining player.

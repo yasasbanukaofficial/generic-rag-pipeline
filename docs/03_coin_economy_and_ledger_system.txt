@@ -1,0 +1,104 @@
+================================================================================
+BATTLEX PLATFORM - COIN ECONOMY AND LEDGER SYSTEM
+================================================================================
+
+1. CURRENCY SPECIFICATION & VALUATION
+--------------------------------------------------------------------------------
+BATTLEX operates on a proprietary digital utility token referred to as the "Coin".
+
+A. Fixed Cryptocurrency Peg:
+   - 100 Coins = 1.00 USDT (Tether USD)
+   - 1 Coin = 0.01 USDT ($0.01 USD)
+   - 1 USDT = 100 Coins
+
+B. Micro-Coin Arithmetic & Integer Precision:
+   - To prevent floating-point rounding errors and fractional coin loss, the system
+     defines 1 Coin as 1,000,000 integer micro-coins:
+       1 Coin = 1,000,000 micro-coins
+       0.01 Coin = 10,000 micro-coins
+       1 USDT = 100,000,000 micro-coins
+   - All backend calculations (Go code), database storage (`int64` / `BIGINT`), and
+     API JSON transfers use integer micro-coins or decimal strings.
+   - The frontend uses JavaScript `BigInt` primitives and utility formatters
+     (`coinFormatter.ts`) to display human-readable coin amounts.
+
+C. Reference Fiat Quotations (LKR Base Example):
+   - The platform configures versioned reference fiat conversion rates (e.g. for Sri Lankan Rupee):
+     * Base Reference Rate: 330 LKR per USDT (1 Coin = 3.30 LKR)
+     * Merchant Deposit Quote: 345 LKR per USDT (1 Coin = 3.45 LKR)
+     * Merchant Buy-Back Quote: 315 LKR per USDT (1 Coin = 3.15 LKR)
+   - These rates establish the merchant spread and provide estimated fiat valuations in
+     the UI; they are reference guidelines rather than guaranteed central bank pegs.
+
+
+2. DOUBLE-ENTRY APPEND-ONLY LEDGER
+--------------------------------------------------------------------------------
+Every financial movement on BATTLEX is recorded in an immutable, append-only double-entry
+ledger. No account balance is ever updated in isolation.
+
+A. Core Architectural Invariants:
+   - Zero-Sum Invariant: Every financial transaction consists of two or more entries (legs)
+     where the sum of all debits (-) and credits (+) exactly equals zero:
+       SUM(legs.amount) == 0
+   - Non-Negative User Balances: User-owned accounts cannot drop below zero. Any operation
+     that would cause a user balance to become negative is aborted at the database level.
+   - Append-Only Durability: The `entries` and `transactions` tables are strictly append-only.
+     Updates and deletes are forbidden. Corrections are applied exclusively through new,
+     audited offsetting transactions.
+   - Idempotency Guarantee: Every post request includes a unique `idempotency_key`. Repeating
+     a request with the same key returns the existing transaction without duplicate posting.
+
+B. Account Kinds (User Accounts):
+   - `available`: Readily spendable funds. Used to enter matchmaking queues, buy goods, or request cash-outs.
+   - `in_play`: Escrow hold. Funds locked while a player is seated in an active game room.
+   - `withdraw_pending`: Reserved funds. The requested cash-out amount PLUS the 200-coin withdrawal fee
+     is held in this account until the payout is completed or cancelled.
+   - `affiliate_locked`: Referral commissions earned by users who have not yet passed KYC verification.
+     Funds are held securely and unlocked automatically upon KYC approval.
+
+C. System Accounts (Platform Accounts):
+   - `treasury`: Master platform reserve. Counterparty for external minting and burns.
+   - `adjustments`: Counterparty for two-admin corrections and adjustments.
+   - `fee_revenue`: Destination for the platform's 10% game commissions before waterfall routing.
+   - `marketing`: Allocated funds for platform marketing and player acquisition.
+   - `dev_infra`: Allocated funds for server hosting, tooling, and development costs.
+   - `company`: Platform retained earnings (40% of net profit pool).
+   - `directors`: Accumulated director dividends (60% of net profit pool) pending monthly statements.
+
+
+3. COIN MINTING AND CORRECTION WORKFLOWS
+--------------------------------------------------------------------------------
+Coins are introduced into the platform or adjusted only through strict maker-checker controls:
+
+A. Two-Admin Minting:
+   - Purpose: Used when a merchant deposits fiat/crypto to buy inventory, or for verified operator deposits.
+   - Step 1 (Maker): Admin submits a mint request specifying recipient user/merchant, coin amount,
+     external fiat/crypto receipt reference, and business reason.
+   - Step 2 (Checker): A different admin (or super admin) with recent TOTP reviews the proof and approves.
+   - Ledger Entry:
+       Debit:  `treasury` (-Amount)
+       Credit: `user.available` (+Amount)
+   - Guardrails: Maximum 100,000 coins per request; maximum 1,000,000 approved coins per maker per UTC day.
+
+B. Two-Admin Adjustments:
+   - Purpose: Correction of accidental errors or manual adjustments.
+   - Follows identical maker-checker separation with auditable justification.
+   - Ledger Entry:
+       Debit:  `adjustments` (-Amount)
+       Credit: `user.available` (+Amount)
+       (or vice-versa for debit adjustments).
+
+
+4. DAILY LIMITS AND RECONCILIATION
+--------------------------------------------------------------------------------
+A. User Cash-Out Limits:
+   - Per-request maximums, daily limits (UTC calendar day), and rolling 30-day cumulative limits
+     apply to the combined total of external withdrawals and merchant buy-backs.
+   - KYC verification is required once cumulative lifetime withdrawals cross the threshold (default: 1,000 USDT).
+
+B. Continuous Ledger Reconciliation:
+   - A scheduled background job periodically scans the entire ledger:
+     1. Sum of all entries in the ledger equals zero.
+     2. Sum of all entries for every account matches the cached `account.balance` row.
+     3. Total minted coins minus total burned coins equals the total active circulating supply.
+   - If any discrepancy is detected, the platform triggers a high-priority incident alert to administrators.

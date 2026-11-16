@@ -1,0 +1,140 @@
+================================================================================
+BATTLEX PLATFORM - GAMEPLAY RULES & ENGINE: CHESS
+================================================================================
+
+1. GAME OVERVIEW AND BOARD SETUP
+--------------------------------------------------------------------------------
+Chess is a classic, two-player, purely deterministic game of strategy and tactics.
+In BATTLEX, the chess engine enforces standard FIDE international chess rules.
+
+A. Board Dimensions and Coordinates:
+   - 8x8 grid consisting of 64 alternating light and dark squares.
+   - Files (columns) are labeled `a` through `h` (left to right from White's perspective).
+   - Ranks (rows) are numbered `1` through `8` (`1` is White's back rank; `8` is Black's back rank).
+   - Coordinate notation: e.g. `e4`, `a1`, `h8`.
+
+B. Players & Seating:
+   - Exactly 2 players:
+     * Seat 1: White (`seat_1`) - moves first.
+     * Seat 2: Black (`seat_2`) - moves second.
+   - Starting Pieces per player:
+     * 1 King
+     * 1 Queen
+     * 2 Rooks
+     * 2 Bishops
+     * 2 Knights
+     * 8 Pawns
+
+
+2. PIECE MOVEMENT RULES
+--------------------------------------------------------------------------------
+1. King:
+   - Moves exactly 1 square in any direction (horizontal, vertical, or diagonal).
+   - May never move into a square attacked by an opponent's piece (cannot move into check).
+
+2. Queen:
+   - Moves any number of unoccupied squares horizontally, vertically, or diagonally.
+   - Combines the powers of a Rook and a Bishop. Cannot jump over pieces.
+
+3. Rook:
+   - Moves any number of unoccupied squares horizontally or vertically along ranks and files.
+   - Cannot jump over pieces.
+
+4. Bishop:
+   - Moves any number of unoccupied squares diagonally.
+   - Each player begins with one light-squared bishop and one dark-squared bishop,
+     which remain on their respective square colors for the entire game.
+
+5. Knight:
+   - Moves in an "L-shape": 2 squares in one cardinal direction, then 1 square perpendicular
+     (or 1 square cardinal, then 2 squares perpendicular).
+   - The Knight is the ONLY chess piece that can jump over other pieces (both friendly and enemy).
+
+6. Pawn:
+   - Moves forward vertically 1 square into an unoccupied square.
+   - Initial 2-Square Advance: On its very first move, a pawn has the option to advance
+     forward 2 squares, provided both squares are unoccupied.
+   - Capturing: Pawns capture 1 square diagonally forward. They cannot capture moving straight forward.
+
+
+3. SPECIAL CHESS MOVES
+--------------------------------------------------------------------------------
+A. Castling (Kingside & Queenside):
+   - A dual move involving the King and one Rook.
+   - Kingside (Short) Castling: King moves 2 squares toward the h-file rook; Rook jumps to the f-file.
+   - Queenside (Long) Castling: King moves 2 squares toward the a-file rook; Rook jumps to the d-file.
+   - Strict Castling Conditions:
+     1. Neither the King nor the chosen Rook has moved previously in the game.
+     2. All squares between the King and the Rook must be vacant.
+     3. The King must NOT currently be in check.
+     4. The King must NOT pass through or land on any square attacked by an enemy piece.
+
+B. En Passant:
+   - If an opponent advances a pawn 2 squares from its starting square, landing adjacent
+     (same rank, neighboring file) to a player's pawn, the player has the option to capture
+     that pawn "in passing".
+   - The capturing pawn moves diagonally forward to the square the enemy pawn just skipped over.
+   - En Passant MUST be played on the immediate move following the 2-square pawn push,
+     otherwise the right to capture en passant is permanently lost.
+
+C. Pawn Promotion:
+   - When a pawn advances to the opponent's back rank (8th rank for White, 1st rank for Black),
+     it cannot remain a pawn.
+   - It is immediately promoted to the player's choice of Queen, Rook, Bishop, or Knight.
+   - Promotion is not limited to previously captured pieces (a player may have multiple Queens).
+
+
+4. CHECK, CHECKMATE AND GAME TERMINATION
+--------------------------------------------------------------------------------
+A. Check:
+   - When a King is under direct attack by one or more enemy pieces.
+   - The checked player must immediately escape check by:
+     1. Moving the King to an unattacked square.
+     2. Capturing the attacking piece.
+     3. Blocking the line of attack by placing a friendly piece between the attacker and King
+        (not possible against Knight checks).
+
+B. Checkmate (Win / Loss):
+   - Occurs when a King is in check and has NO legal moves to eliminate the check.
+   - The attacking player wins the game immediately (`status: "checkmate"`).
+   - In staked games, the winner receives 90% of the total pot.
+
+C. Draws (0% Fee, Full Refund):
+   A game ends in a Draw under the following official conditions:
+   1. Stalemate: The player whose turn it is has NO legal moves, but their King is NOT in check.
+   2. Threefold Repetition: The exact same board position (same pieces, same turns, same castling
+      and en passant rights) occurs 3 times throughout the game.
+   3. 50-Move Rule: 50 consecutive moves per side (100 plies) have occurred without any pawn advance
+      and without any piece capture.
+   4. Insufficient Material: Neither player has sufficient pieces to theoretically force checkmate
+      (e.g. King vs King, King & Bishop vs King, King & Knight vs King).
+   5. Mutual Draw Agreement: Both players agree to declare a draw.
+
+D. Resignation:
+   - A player can click the "Resign" button at any point during their turn or the opponent's turn.
+   - The resigning player forfeits the game; the opponent is awarded the victory.
+
+E. Disconnection and Timeouts:
+   - If a player runs out of turn time without moving, a timeout penalty is registered.
+   - If a player disconnects and fails to reconnect within the 45-60 second grace period,
+     they are forfeited, and the remaining player wins.
+
+
+5. ENGINE IMPLEMENTATION & CLIENT PROTOCOL
+--------------------------------------------------------------------------------
+- Server Engine: Integrated with standard FIDE-compliant chess engine (`internal/domains/engine/chess`).
+- Full State Serialization: The server persists the initial FEN plus the complete array of UCI moves
+  (`moves: ["e2e4", "e7e5", "g1f3", ...]`) to guarantee 100% fidelity on rehydration and repetition checks.
+- Move Payload: Client submits actions formatted in UCI notation:
+  ```json
+  {
+    "type": "move",
+    "payload": {
+      "from": "e2",
+      "to": "e4",
+      "promotion": ""
+    }
+  }
+  ```
+- Validation: Server validates legality before applying. Invalid moves reject with an error
+  message without modifying state or advancing turn clocks.

@@ -1,0 +1,106 @@
+================================================================================
+BATTLEX PLATFORM - GOVERNANCE, EMERGENCY CONTROLS AND SUPPORT OPERATIONS
+================================================================================
+
+1. EMERGENCY PLATFORM SWITCHES (KILL-SWITCHES)
+--------------------------------------------------------------------------------
+To protect platform solvency, player assets, and integrity during unexpected exploits,
+critical infrastructure failures, or market volatility, BATTLEX provides platform-wide
+emergency switches:
+
+A. The Core Switches:
+   1. `staked_games_enabled`:
+      - When disabled: Halts all staked matchmaking queues and prevents new staked lobbies.
+      - Ongoing games finish normally and settle; Free Play games remain 100% operational.
+   2. `withdrawals_enabled`:
+      - When disabled: Blocks new withdrawal submissions and prevents signing/broadcasting
+        of outbound TRX transfers.
+   3. `merchant_operations_enabled`:
+      - When disabled: Suspends merchant sell-to-player transfers and buy-back authorizations.
+   4. `tron_deposits_enabled`:
+      - When disabled: Suspends automated crediting of incoming on-chain TRX deposits.
+   5. `tron_withdrawals_enabled`:
+      - When disabled: Freezes automated TRX signing and transfers.
+   6. `tron_sweeps_enabled`:
+      - When disabled: Pauses automated sweeps from the hot wallet to cold storage.
+
+B. Asymmetric Authorization Model (Fast-Halt, Strict-Resume):
+   - Emergency Halt (Single Admin): A single super admin can immediately disable any switch
+     by providing an audited incident reason. This ensures instantaneous reaction to threats.
+   - Resumption (Two Super Admins): Re-enabling a switch requires TWO distinct super admins
+     with recent session TOTP verification, preventing rogue or compromised staff from
+     prematurely lifting security locks.
+
+
+2. DYNAMIC ECONOMY CONFIGURATION PROPOSALS
+--------------------------------------------------------------------------------
+Platform economic parameters (fee waterfall percentages, merchant promotion volume thresholds,
+risk alert limits, soft launch parameters) are NOT hardcoded in code. They are managed
+via versioned economy proposals:
+
+A. Maker-Checker Economy Proposals:
+   - Propose: A super admin creates a proposal derived from the active version, altering
+     specific values (e.g. adjusting marketing rate or merchant stage thresholds).
+   - Minimum 1-Hour Future Effective Time: Proposals must specify an `effective_from` timestamp
+     at least 1 hour in the future. Immediate retroactive modifications are strictly prohibited.
+   - Approval: A DIFFERENT super admin with TOTP reviews the structured JSON diff and approves.
+   - Immutable Versioning: Historical economy versions are immutable. Completed game settlements
+     always retain the specific configuration version that was active at the moment the game concluded.
+
+
+3. REAL-TIME INCIDENT ALERTS & NOTIFICATIONS
+--------------------------------------------------------------------------------
+BATTLEX features a multi-channel operational alerting system:
+
+A. Alert Triggers:
+   - `ledger_mismatch`: Continuous reconciliation detected a zero-sum or balance discrepancy.
+   - `settlement_outbox_stalled`: Game settlement outbox item uncompleted after retry threshold.
+   - `tron_hot_wallet_low`: Hot wallet balance dropped below `hot_min_sun`.
+   - `tron_hot_wallet_high`: Hot wallet balance exceeded `hot_max_sun` without successful sweep.
+   - `tron_transfer_failed`: Outbound TRX withdrawal encountered an unexpected node failure.
+   - `large_mint_requested`: Mint request exceeding standard threshold.
+   - `emergency_switch_changed`: Any kill-switch was toggled.
+
+B. Multi-Channel Dispatch:
+   - Admin UI Banner: High-priority banner displayed across all admin portal screens.
+   - Staff Notification Bell & Badges: Real-time badge counts and notification items
+     delivered via WebSocket (`staff.notification`) to active admins.
+   - SMTP Email Alerts: Outbound automated emails dispatched to designated on-call operator emails.
+
+
+4. PLAYER CUSTOMER SUPPORT DESK
+--------------------------------------------------------------------------------
+BATTLEX includes a fully integrated, in-app support ticketing desk (`internal/domains/support`):
+
+A. Ticket Categories:
+   - `account`: Login issues, profile data, credentials.
+   - `deposit_wallet`: Missing merchant or TRON crypto deposits.
+   - `withdrawal`: Cash-out status, delays, bank info queries.
+   - `kyc`: Document rejection inquiries, re-submission assistance.
+   - `game_dispute`: Disconnects, rules disputes, suspected cheating.
+   - `merchant_issue`: Disagreements or communication issues with merchants.
+   - `other`: General questions and feedback.
+
+B. Ticket Status Lifecycle:
+   - `open`: Newly created ticket awaiting initial staff response.
+   - `pending_player`: Staff replied; ticket awaiting response from the player.
+   - `resolved`: Staff resolved the issue and marked the ticket completed.
+   - `closed`: Player confirmed resolution, or ticket auto-closed after 7 days of inactivity.
+   - Reopen Window: Resolved or closed tickets can be reopened by the player within 14 days.
+
+C. Staff Assignment & Collision Detection:
+   - Admins can assign tickets to themselves or colleagues.
+   - Optimistic Locking: Staff actions include `expected_assignee_id`. If another admin
+     assigns or replies to the ticket concurrently, the collision is caught with a 409 Conflict,
+     preventing duplicate or contradictory customer replies.
+
+D. Internal Notes & Escalations:
+   - Internal Staff Notes: Staff can post internal notes on a ticket thread. These notes
+     are strictly hidden from the player and only visible to authorized administrators.
+   - Escalation: Staff can escalate complex or high-value financial disputes to super admins.
+     Once escalated, only super admins can reply or reassign the ticket.
+
+E. Canned Responses and Metrics:
+   - Super admins can manage reusable canned response templates to expedite answers to common questions.
+   - Operational Metrics: 30-day reporting tracking open tickets, unassigned queue count,
+     median first response time, and median time to resolution.

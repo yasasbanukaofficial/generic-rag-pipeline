@@ -1,0 +1,119 @@
+================================================================================
+BATTLEX PLATFORM - GAME POT SETTLEMENT AND REVENUE FEE WATERFALL
+================================================================================
+
+1. GAME POT ESCROW & SPLIT RULES
+--------------------------------------------------------------------------------
+When players enter a staked match (e.g. Chess, Checkers, or Ludo), their stakes are
+locked atomically into escrow:
+
+A. Atomic Escrow Hold:
+   - At match start, the stake amount is debited from each player's `available` account
+     and credited to their `in_play` account:
+       Debit:  `player.available` (-Stake)
+       Credit: `player.in_play`   (+Stake)
+   - If any player has insufficient funds at the moment the match forms, the hold fails,
+     no players are charged, the underfunded player is ejected, and funded players are
+     requeued with original priority.
+
+B. Pot Sizing:
+   - Total Pot = Stake per player * Number of seated players
+   - Examples:
+     * 2 Players at 100 coins each = 200 Coin Pot
+     * 2 Players at 250 coins each = 500 Coin Pot
+     * 4 Players at 100 coins each = 400 Coin Pot
+
+C. Winning Outcome (90% / 10% Rule):
+   - The platform charges a 10% commission fee ONLY on games with a clear winner.
+   - Winner Payout: 90% of the Total Pot.
+   - Platform Fee: 10% of the Total Pot.
+   - Example (2-player match at 250 coins):
+     * Total Pot = 500 coins.
+     * Winner receives: 500 * 0.90 = 450 coins.
+     * Platform Fee: 500 * 0.10 = 50 coins.
+     * Net profit to winner = 450 - 250 (own stake) = +200 coins profit.
+
+D. Single-Winner Rule in Multi-Player Games (Ludo):
+   - In 3-player and 4-player Ludo, BATTLEX enforces a winner-takes-all model.
+   - The first player to finish wins 90% of the entire pot.
+   - Non-winners (2nd, 3rd, 4th place) receive 0 coins.
+   - Example (4 players at 100 coins):
+     * Total Pot = 400 coins.
+     * Winner receives: 360 coins (+260 coins net profit).
+     * Platform fee: 40 coins.
+     * All 3 losers receive 0.
+
+E. Draws and Voids (0% Fee Guarantee):
+   - If a game ends in a Draw (e.g. Chess stalemate, threefold repetition, 50-move rule,
+     or Checkers draw) or is Voided due to a server fault/timeout:
+     * Zero platform fee is charged (0%).
+     * 100% of the held stakes are returned from `in_play` to each player's `available` account:
+         Debit:  `player.in_play`   (-Stake)
+         Credit: `player.available` (+Stake)
+
+
+2. THE 100% REVENUE SHARE WATERFALL
+--------------------------------------------------------------------------------
+The 10% platform fee is treated as gross revenue (100% of the commission) and is
+distributed across a predefined waterfall configured in the economy engine:
+
+Total Platform Fee = 100% (e.g. 50 coins from a 500 coin pot)
+
+Distribution Breakdown:
+--------------------------------------------------------------------------------
+1. Operations, Growth & Affiliates (45% of Fee):
+   - Unilevel Affiliate Commissions: 10% of fee (5.0 coins)
+     * L1 Upline: 4% of fee (2.0 coins)
+     * L2 Upline: 3% of fee (1.5 coins)
+     * L3 Upline: 2% of fee (1.0 coins)
+     * L4 Upline: 1% of fee (0.5 coins)
+     * Note: Split 50/50 between winner side and non-winner sides.
+   - Direct Referral Bonus: 5% of fee (2.5 coins)
+     * Split 50/50 between winner's direct inviter and non-winner inviters.
+   - Merchant Level Pools: 5.25% of fee (2.625 coins)
+     * Sub Merchant L1 Pool: 0.5% of fee
+     * Sub Merchant L2 Pool: 1.0% of fee
+     * Sub Merchant L3 Pool: 2.0% of fee
+     * Main Merchant L1 Pool: 0.25% of fee
+     * Main Merchant L2 Pool: 0.5% of fee
+     * Main Merchant L3 Pool: 1.0% of fee
+   - Merchant Discretionary Bonus Pool: 4.75% of fee (2.375 coins)
+     * Accrues in platform system account for discretionary distribution.
+   - Marketing Pool: 10% of fee (5.0 coins)
+     * Credited to platform marketing system account.
+   - Development & Infrastructure Pool: 10% of fee (5.0 coins)
+     * Credited to platform dev/infrastructure system account.
+
+2. Net Profit Pool (55% of Fee + Residuals):
+   - Base Net Profit: 55% of fee (27.5 coins)
+   - PLUS Unclaimed Affiliate Shares (e.g. missing uplines, soft-deleted accounts)
+   - PLUS Micro-coin Rounding Residuals
+   - PLUS Empty Merchant Level Pools at month close
+
+3. Net Profit Pool Split:
+   - Company Treasury: 40% of Net Profit Pool
+     * At base full coverage: 27.5 * 0.40 = 11.0 coins (22% of total fee)
+   - Directors Pool: 60% of Net Profit Pool
+     * At base full coverage: 27.5 * 0.60 = 16.5 coins (33% of total fee)
+
+
+3. DIRECTORS REGISTER & MONTHLY STATEMENT CLOSE
+--------------------------------------------------------------------------------
+A. Director Register:
+   - Platform stakeholders (investors) hold registered shares in the platform.
+   - Shares are measured in basis points totaling exactly 10,000 bps (100.00%).
+   - Example Default: Four equal directors holding 2,500 bps (25.00%) each.
+   - Modifications to the director register require maker-checker super admin approval
+     and take effect on the first day of the subsequent UTC calendar month.
+
+B. Monthly Close & Statement Generation:
+   - On the 1st of each UTC month, an automated reconciliation job calculates the
+     period-end Net Profit and Directors Pool balance.
+   - Each director's statement line is generated based on their basis point share.
+   - Statement rows round down to integer micro-coins; rounding fractions carry forward.
+   - Statements are closed immutably with two-admin maker-checker review and TOTP.
+   - Statements are paid off-platform (bank wire, crypto) and recorded with external
+     payment references. Recording a paid statement executes an audited ledger burn:
+       Debit:  `directors` (-Amount)
+       Credit: `treasury`  (+Amount)
+     This permanently settles the platform's financial obligation.
