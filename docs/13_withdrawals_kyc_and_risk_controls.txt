@@ -1,121 +1,115 @@
-================================================================================
 BATTLEX PLATFORM - WITHDRAWALS, KYC AND RISK CONTROLS
-================================================================================
 
-1. WITHDRAWAL RULES AND FINANCIAL LIMITS
---------------------------------------------------------------------------------
+WITHDRAWAL RULES AND FINANCIAL LIMITS
 BATTLEX supports three primary payout channels for player withdrawals:
-1. Native TRON TRX on-chain transfers.
-2. Manual USDT-TRC20 cryptocurrency payouts.
-3. Manual Bank Wire / Local Fiat transfers.
+Native TRON TRX on-chain transfers.
+Manual USDT-TRC20 cryptocurrency payouts.
+Manual Bank Wire / Local Fiat transfers.
 
-A. Minimum Payout and Platform Withdrawal Fee:
-   - Minimum Withdrawal Amount: 2,000 Coins (equivalent to 20.00 USDT).
-   - Flat Platform Withdrawal Fee: 200 Coins (equivalent to 2.00 USDT).
-   - The fee is charged IN ADDITION to the requested payout amount.
-   - Example:
-     * Player requests a withdrawal of 2,000 coins.
-     * Total reserved from player balance = 2,000 + 200 = 2,200 coins.
-     * Player receives net payout value of 2,000 coins.
-     * Platform earns 200 coins fee booked to `fee_revenue`.
+Minimum Payout and Platform Withdrawal Fee:
+   Minimum Withdrawal Amount: 2,000 Coins (equivalent to 20.00 USDT).
+   Flat Platform Withdrawal Fee: 200 Coins (equivalent to 2.00 USDT).
+   The fee is charged IN ADDITION to the requested payout amount.
+   Example:
+     Player requests a withdrawal of 2,000 coins.
+     Total reserved from player balance = 2,000 + 200 = 2,200 coins.
+     Player receives net payout value of 2,000 coins.
+     Platform earns 200 coins fee booked to `fee_revenue`.
 
-B. Address Cooling Period (48-Hour Rule):
-   - Whenever a player adds a new withdrawal address/bank account or updates an existing one,
+Address Cooling Period (48-Hour Rule):
+   Whenever a player adds a new withdrawal address/bank account or updates an existing one,
      the destination enters a mandatory 48-hour cooling period.
-   - Withdrawals to that address are blocked until the 48 hours have fully expired.
+   Withdrawals to that address are blocked until the 48 hours have fully expired.
 
-C. Credential Change Hold (24-Hour Rule):
-   - Any modification to account security settings (password change or email change)
+Credential Change Hold (24-Hour Rule):
+   Any modification to account security settings (password change or email change)
      triggers an automatic 24-hour platform-wide withdrawal hold for that account.
 
-D. Single Open Withdrawal Invariant:
-   - A player may have only ONE open withdrawal request at any given time.
-   - A new withdrawal cannot be submitted until the pending request is completed or cancelled.
+Single Open Withdrawal Invariant:
+   A player may have only ONE open withdrawal request at any given time.
+   A new withdrawal cannot be submitted until the pending request is completed or cancelled.
 
 
-2. TWO-ADMIN MAKER-CHECKER APPROVAL
---------------------------------------------------------------------------------
+TWO-ADMIN MAKER-CHECKER APPROVAL
 No single person or automated script can unilaterally withdraw money from the platform.
 All external payouts require independent two-admin verification:
 
-A. Step 1 - First Financial Approval (Maker):
-   - Staff member with `admin` or `super_admin` role reviews the withdrawal queue.
-   - Verifies:
-     * Player KYC status is valid.
-     * No unresolved fraud flags or risk holds are active.
-     * Player has legitimately earned coins through gameplay or merchant buy-back.
-   - Action: Submits first approval (`status: "first_approved"`).
-   - Player Cancellation Ends: Up until this first approval, the player has the right
+Step 1 - First Financial Approval (Maker):
+   Staff member with `admin` or `super_admin` role reviews the withdrawal queue.
+   Verifies:
+     Player KYC status is valid.
+     No unresolved fraud flags or risk holds are active.
+     Player has legitimately earned coins through gameplay or merchant buy-back.
+   Action: Submits first approval (`status: "first_approved"`).
+   Player Cancellation Ends: Up until this first approval, the player has the right
      to cancel their pending withdrawal. Once first-approved, player cancellation is blocked.
 
-B. Step 2 - Second Financial Approval & Settlement (Checker):
-   - A DIFFERENT administrator from the maker, possessing `super_admin` role, performs
+Step 2 - Second Financial Approval & Settlement (Checker):
+   A DIFFERENT administrator from the maker, possessing `super_admin` role, performs
      the final release.
-   - The checker must provide a valid session TOTP (two-factor authentication) code.
-   - For Manual Bank / USDT: The admin transfers funds off-platform and records the
+   The checker must provide a valid session TOTP (two-factor authentication) code.
+   For Manual Bank / USDT: The admin transfers funds off-platform and records the
      external transaction reference number in the system.
-   - For TRX: The admin triggers the cryptographic signing and on-chain broadcast.
-   - Settlement: The reserved 2,200 coins are burned and booked on the ledger:
+   For TRX: The admin triggers the cryptographic signing and on-chain broadcast.
+   Settlement: The reserved 2,200 coins are burned and booked on the ledger:
        Debit:  `player.withdraw_pending` (-2,200 coins)
        Credit: `treasury`                (+2,000 coins burned)
        Credit: `fee_revenue`             (+200 coins fee booked)
 
 
-3. KNOW YOUR CUSTOMER (KYC) VERIFICATION WORKFLOW
---------------------------------------------------------------------------------
-A. Mandatory KYC Triggers:
-   - Cumulative Lifetime Cash-Out: When a player's cumulative withdrawals (including
+KNOW YOUR CUSTOMER (KYC) VERIFICATION WORKFLOW
+Mandatory KYC Triggers:
+   Cumulative Lifetime Cash-Out: When a player's cumulative withdrawals (including
      merchant buy-backs) exceed the lifetime threshold (default: 1,000 USDT / 100,000 coins).
-   - Risk Flag Escalation: If anti-fraud mechanisms flag an account for suspicious velocity
+   Risk Flag Escalation: If anti-fraud mechanisms flag an account for suspicious velocity
      or collusion, KYC verification is triggered manually before any payouts can proceed.
-   - Affiliate Earner Unlock: Affiliates must complete KYC to unlock earnings from `affiliate_locked`.
+   Affiliate Earner Unlock: Affiliates must complete KYC to unlock earnings from `affiliate_locked`.
 
-B. Document Submission:
-   - Players upload identity documents via the web portal:
-     * Government-issued photo ID (Passport, National Identity Card, Driver's License).
-     * Proof of Address (Utility bill, bank statement issued within the last 90 days).
-     * Supported formats: JPEG, PNG, WebP (maximum 5 MB per file).
+Document Submission:
+   Players upload identity documents via the web portal:
+     Government-issued photo ID (Passport, National Identity Card, Driver's License).
+     Proof of Address (Utility bill, bank statement issued within the last 90 days).
+     Supported formats: JPEG, PNG, WebP (maximum 5 MB per file).
 
-C. Secure Document Storage:
-   - Documents are stored in an authenticated, non-public object store:
-     * Cloudinary: Private `raw` authenticated storage bucket under `<FOLDER>/kyc/...`.
-     * Local Disk (Dev): Restricted filesystem directories with 0700 file permissions.
-   - Public URLs are disabled. When staff review documents, the server streams the file
+Secure Document Storage:
+   Documents are stored in an authenticated, non-public object store:
+     Cloudinary: Private `raw` authenticated storage bucket under `<FOLDER>/kyc/...`.
+     Local Disk (Dev): Restricted filesystem directories with 0700 file permissions.
+   Public URLs are disabled. When staff review documents, the server streams the file
      securely after verifying admin privileges, logging an immutable audit record of the view.
 
-D. Review and Decisioning:
-   - Admin verifies document legibility, name matching, and non-expired dates.
-   - Decision is marked `verified` or `rejected` with an explanatory reason.
-   - Live socket notice `kyc_decision` is pushed to the player.
-   - If verified, any funds in `affiliate_locked` are automatically swept to `available`.
+Review and Decisioning:
+   Admin verifies document legibility, name matching, and non-expired dates.
+   Decision is marked `verified` or `rejected` with an explanatory reason.
+   Live socket notice `kyc_decision` is pushed to the player.
+   If verified, any funds in `affiliate_locked` are automatically swept to `available`.
 
 
-4. ANTI-FRAUD AND RISK DETECTION SYSTEM
---------------------------------------------------------------------------------
+ANTI-FRAUD AND RISK DETECTION SYSTEM
 BATTLEX operates an automated risk detection engine that flags suspicious behaviors
 without imposing disruptive automatic bans. The engine creates reviewable risk flags
 for human administrative investigation:
 
-A. Monitored Behavioral Signals:
-   1. `repeated_pairs`:
-      - Two players repeatedly matching against each other in public queues across
+Monitored Behavioral Signals:
+   `repeated_pairs`:
+      Two players repeatedly matching against each other in public queues across
         multiple high-stake matches (suspected win-trading or collusion).
-   2. `one_sided_wins`:
-      - Abnormal, statistically improbable win streaks where one player consistently
+   `one_sided_wins`:
+      Abnormal, statistically improbable win streaks where one player consistently
         defeats another specific opponent to siphon funds.
-   3. `shared_ip_device`:
-      - Multiple accounts competing against each other from the same IP address,
+   `shared_ip_device`:
+      Multiple accounts competing against each other from the same IP address,
         browser fingerprint, or device signature.
-   4. `tron_deposit_no_play`:
-      - A player deposits cryptocurrency (TRX) and immediately attempts to cash out
+   `tron_deposit_no_play`:
+      A player deposits cryptocurrency (TRX) and immediately attempts to cash out
         via merchant or bank transfer without playing staked games (suspected money laundering
         or currency arbitrage).
-   5. `disproportionate_payouts`:
-      - Payout requests that vastly exceed a player's lifetime game winnings and legitimate deposits.
+   `disproportionate_payouts`:
+      Payout requests that vastly exceed a player's lifetime game winnings and legitimate deposits.
 
-B. Risk Flag Handling:
-   - Detection does NOT freeze gameplay or abruptly ban the user.
-   - Instead, if an open risk flag exists for an account submitting a withdrawal:
-     * The withdrawal is automatically placed on an administrative "Risk Hold".
-     * Administrators must review the flagged evidence, inspect game replay history,
+Risk Flag Handling:
+   Detection does NOT freeze gameplay or abruptly ban the user.
+   Instead, if an open risk flag exists for an account submitting a withdrawal:
+     The withdrawal is automatically placed on an administrative "Risk Hold".
+     Administrators must review the flagged evidence, inspect game replay history,
        and verify user identity before releasing the hold.

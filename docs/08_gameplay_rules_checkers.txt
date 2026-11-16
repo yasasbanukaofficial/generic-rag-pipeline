@@ -1,93 +1,87 @@
-================================================================================
 BATTLEX PLATFORM - GAMEPLAY RULES & ENGINE: CHECKERS (DRAUGHTS)
-================================================================================
 
-1. GAME OVERVIEW AND BOARD SETUP
---------------------------------------------------------------------------------
+GAME OVERVIEW AND BOARD SETUP
 Checkers (American Checkers / English Draughts) is a two-player, purely strategic
 board game. In BATTLEX, checkers rules strictly enforce mandatory captures and
 kinging mechanics.
 
-A. Board Geometry and Square Numbering:
-   - Played on an 8x8 checkerboard (64 squares).
-   - Only the 32 dark squares are used. The light squares are never occupied.
-   - Standard notation numbers the 32 playable dark squares from 1 to 32:
-     * Black (dark pieces) starts on squares 1 through 12.
-     * White (light pieces) starts on squares 21 through 32.
-     * Squares 13 through 20 represent the middle neutral rows.
-   - The board is oriented such that each player has a dark square in the near-left corner.
+Board Geometry and Square Numbering:
+   Played on an 8x8 checkerboard (64 squares).
+   Only the 32 dark squares are used. The light squares are never occupied.
+   Standard notation numbers the 32 playable dark squares from 1 to 32:
+     Black (dark pieces) starts on squares 1 through 12.
+     White (light pieces) starts on squares 21 through 32.
+     Squares 13 through 20 represent the middle neutral rows.
+   The board is oriented such that each player has a dark square in the near-left corner.
 
-B. Players & Seating:
-   - Exactly 2 players:
-     * Seat 1: Black (`seat_1`) - moves first.
-     * Seat 2: White (`seat_2`) - moves second.
-   - Starting Equipment: 12 discs (men) per player.
+Players & Seating:
+   Exactly 2 players:
+     Seat 1: Black (`seat_1`) - moves first.
+     Seat 2: White (`seat_2`) - moves second.
+   Starting Equipment: 12 discs (men) per player.
 
 
-2. PIECE MOVEMENT RULES
---------------------------------------------------------------------------------
-A. Regular Checkers (Men):
-   - Move diagonally forward 1 step into an unoccupied dark square.
-   - Men can NEVER move backwards.
-   - Black moves forward toward squares 21-32; White moves forward toward squares 1-12.
+PIECE MOVEMENT RULES
+Regular Checkers (Men):
+   Move diagonally forward 1 step into an unoccupied dark square.
+   Men can NEVER move backwards.
+   Black moves forward toward squares 21-32; White moves forward toward squares 1-12.
 
-B. Jumping and Capturing (Mandatory Capture Rule):
-   - A piece captures an opponent's adjacent piece by jumping over it diagonally into
+Jumping and Capturing (Mandatory Capture Rule):
+   A piece captures an opponent's adjacent piece by jumping over it diagonally into
      the immediately vacant square beyond.
-   - The jumped opponent piece is immediately removed from the board.
-   - Mandatory Jump: If a player has one or more legal jump options available on their turn,
+   The jumped opponent piece is immediately removed from the board.
+   Mandatory Jump: If a player has one or more legal jump options available on their turn,
      they CANNOT make a simple diagonal move. They MUST jump!
-   - Choice of Jump: If multiple different jump paths are available, the player may choose
+   Choice of Jump: If multiple different jump paths are available, the player may choose
      which jump to take.
-   - Multi-Jump Sequences:
-     * If a piece completes a jump and can immediately make another jump from its landing square,
+   Multi-Jump Sequences:
+     If a piece completes a jump and can immediately make another jump from its landing square,
        it MUST continue jumping in the same turn.
-     * The turn does not conclude until all consecutive jumps in that chain are completed.
+     The turn does not conclude until all consecutive jumps in that chain are completed.
 
-C. Crowning / Kinging:
-   - When a man reaches the farthest row on the opponent's side (the "King Row": squares 29-32
+Crowning / Kinging:
+   When a man reaches the farthest row on the opponent's side (the "King Row": squares 29-32
      for Black; squares 1-4 for White), it is crowned and becomes a "King".
-   - In BATTLEX, the board displays a crowned checker graphic.
-   - King Powers:
-     * A King can move diagonally forward AND diagonally backward 1 square.
-     * A King can jump and capture diagonally forward AND diagonally backward.
-   - Kinging Turn Stop: If a regular man jumps into the King Row, its turn ends immediately
+   In BATTLEX, the board displays a crowned checker graphic.
+   King Powers:
+     A King can move diagonally forward AND diagonally backward 1 square.
+     A King can jump and capture diagonally forward AND diagonally backward.
+   Kinging Turn Stop: If a regular man jumps into the King Row, its turn ends immediately
      upon being crowned. It cannot continue jumping backwards in that same turn as a new king.
 
 
-3. VICTORY, LOSS AND DRAW CONDITIONS
---------------------------------------------------------------------------------
-A. Victory / Loss Conditions:
-   - A player wins when:
-     1. Total Capture: They capture all 12 of the opponent's pieces.
-     2. Blockade: The opponent has pieces remaining on the board, but has NO legal moves
+VICTORY, LOSS AND DRAW CONDITIONS
+Victory / Loss Conditions:
+   A player wins when:
+     Total Capture: They capture all 12 of the opponent's pieces.
+     Blockade: The opponent has pieces remaining on the board, but has NO legal moves
         available on their turn (all remaining pieces are completely trapped).
-   - In staked games, the winner receives 90% of the total pot.
+   In staked games, the winner receives 90% of the total pot.
 
-B. Draw Conditions (0% Fee, Full Stake Refund):
+Draw Conditions (0% Fee, Full Stake Refund):
    A Checkers match ends in a Draw under two automated conditions:
-   1. The 40-Move Rule (80 Plies without Capture):
-      - If 80 consecutive plies (40 full moves by each player) occur without a single piece
+   The 40-Move Rule (80 Plies without Capture):
+      If 80 consecutive plies (40 full moves by each player) occur without a single piece
         capture, the game is automatically declared a Draw.
-   2. Threefold Repetition of Position:
-      - If the exact same board configuration (identical pieces on identical squares with
+   Threefold Repetition of Position:
+      If the exact same board configuration (identical pieces on identical squares with
         the same player to move) occurs 3 times during the match.
 
-C. Resignation & Forfeits:
-   - A player may resign at any time, conceding the win to the opponent.
-   - Disconnecting beyond the grace window results in an automated forfeit.
+Resignation & Forfeits:
+   A player may resign at any time, conceding the win to the opponent.
+   Disconnecting beyond the grace window results in an automated forfeit.
 
 
-4. ENGINE IMPLEMENTATION & CLIENT PROTOCOL
---------------------------------------------------------------------------------
-- Server Engine: Located in `internal/domains/engine/checkers`.
-- Board Representation: Fixed array of 32 square states:
-  * `0`: Empty square
-  * `1`: Black Man
-  * `2`: Black King
-  * `-1`: White Man
-  * `-2`: White King
-- Action Submission Payload:
+ENGINE IMPLEMENTATION & CLIENT PROTOCOL
+Server Engine: Located in `internal/domains/engine/checkers`.
+Board Representation: Fixed array of 32 square states:
+  `0`: Empty square
+  `1`: Black Man
+  `2`: Black King
+  `-1`: White Man
+  `-2`: White King
+Action Submission Payload:
   Clients can submit moves specifying square indices (1-32) or a multi-jump path:
   ```json
   {
@@ -97,6 +91,6 @@ C. Resignation & Forfeits:
     }
   }
   ```
-- Strict Rule Validation: The server validates whether the piece belongs to the active turn,
+Strict Rule Validation: The server validates whether the piece belongs to the active turn,
   whether the path is diagonal, whether landing squares are vacant, and whether mandatory jumps
   are being obeyed. Any non-compliant action is rejected with `ErrIllegalAction`.

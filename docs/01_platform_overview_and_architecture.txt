@@ -1,9 +1,6 @@
-================================================================================
 BATTLEX PLATFORM - SYSTEM ARCHITECTURE AND TECHNICAL OVERVIEW
-================================================================================
 
-1. PLATFORM OVERVIEW
---------------------------------------------------------------------------------
+PLATFORM OVERVIEW
 BATTLEX is a real-time, server-authoritative multiplayer skill-gaming and digital
 board-game platform. The platform allows players to compete against each other in
 classic tabletop games such as Chess, Checkers (Draughts), Ludo (2 to 4 players),
@@ -11,118 +8,94 @@ and Carrom, playing either in Free Play mode (casual/practice) or for staked
 digital coin amounts.
 
 Key Tenets of BATTLEX:
-- Server-Authoritative Logic: All game rules, moves, dice rolls, turns, and outcomes
+Server-Authoritative Logic: All game rules, moves, dice rolls, turns, and outcomes
   are calculated and verified strictly on the backend server. The frontend client
   is a presentation and input layer; it never dictates game outcomes or balances.
-- Fair & Transparent Economy: Stakes are held in atomic escrow at the start of a
+Fair & Transparent Economy: Stakes are held in atomic escrow at the start of a
   game. Winning games are subject to a clear commission fee (10% of total pot),
   while drawn or voided games refund 100% of player stakes without any platform fees.
-- Micro-Coin Double-Entry Ledger: Every balance mutation is tracked through an
+Micro-Coin Double-Entry Ledger: Every balance mutation is tracked through an
   append-only double-entry financial ledger where every transaction balances to zero,
   preventing phantom coins or negative balances.
-- Peer-to-Peer Merchant Network: An off-platform cash-in and buy-back merchant
+Peer-to-Peer Merchant Network: An off-platform cash-in and buy-back merchant
   franchise system provides local fiat liquidity and deposit/withdrawal channels.
-- TRON Blockchain Integration: Built-in support for native cryptocurrency (TRX)
+TRON Blockchain Integration: Built-in support for native cryptocurrency (TRX)
   deposits and administrative two-admin withdrawals using cryptographic wallet ownership
   proofs and chain finality checks.
 
 
-2. MONOREPO STRUCTURE AND DIRECTORY LAYOUT
---------------------------------------------------------------------------------
-The project is organized as a unified monorepo:
-
-  BATTLEX/
-  ├── applications/
-  │   ├── server/             # Go modular monolith backend service
-  │   │   ├── cmd/server/     # Server entrypoint (main.go)
-  │   │   ├── internal/
-  │   │   │   ├── common/     # Shared cross-cutting modules (config, ws, db, objectstore)
-  │   │   │   └── domains/    # Bounded domain contexts (auth, wallet, game, engine, etc.)
-  │   │   └── migrations/     # PostgreSQL database migrations (golang-migrate .sql)
-  │   ├── web/                # Next.js 15 frontend application
-  │   │   ├── src/
-  │   │   │   ├── app/        # Next.js App Router pages and layout
-  │   │   │   ├── components/ # React components (UI primitives, game boards, modals)
-  │   │   │   ├── games/      # Game client catalog and board registry
-  │   │   │   ├── hooks/      # React hooks (useGameSocket, useAuth, etc.)
-  │   │   │   └── utils/      # Client utilities, formatters, and environment config
-  │   └── docker-compose.yml  # Local stack orchestration (Redis, Server, Web)
-  ├── docs/                   # Platform documentation and operations runbooks
-  ├── openspec/               # Formal functional and design specifications (OpenSpec)
-  └── scripts/                # CI verification and layout integrity scripts
+MONOREPO STRUCTURE AND DIRECTORY LAYOUT
+The project is organized as a unified monorepo.
+Directory layout (BATTLEX/ root): applications/server (Go modular monolith backend: cmd/server entrypoint, internal/common shared modules, internal/domains bounded contexts, migrations PostgreSQL SQL); applications/web (Next.js 15 frontend: src/app routes and layouts, src/components UI and game components, src/games game client catalog and board registry, src/hooks React hooks, src/utils client utilities); applications/docker-compose.yml (local stack orchestration for Redis, server, web); docs (platform documentation and operations runbooks); openspec (formal functional and design specifications); scripts (CI verification and layout integrity scripts).
 
 
-3. BACKEND ARCHITECTURE (GO MODULAR MONOLITH)
---------------------------------------------------------------------------------
+BACKEND ARCHITECTURE (GO MODULAR MONOLITH)
 The backend is written in Go and structured as a modular monolith. It avoids
 distributed microservice network overhead while maintaining strict domain
 boundaries and encapsulation.
 
 Key Technologies:
-- Runtime: Go (Golang) 1.22+
-- Database: PostgreSQL 16 (relational integrity, row-level locking, ACID transactions)
-- In-Memory Cache & PubSub: Redis 7
-- WebSocket Transport: Gorilla WebSocket with customized client connection hubs
-- Object Storage Port: Abstracted interface supporting Cloudinary (production authenticated
+Runtime: Go (Golang) 1.22+
+Database: PostgreSQL 16 (relational integrity, row-level locking, ACID transactions)
+In-Memory Cache & PubSub: Redis 7
+WebSocket Transport: Gorilla WebSocket with customized client connection hubs
+Object Storage Port: Abstracted interface supporting Cloudinary (production authenticated
   raw storage) and local disk storage (development/testing)
 
 Domain Structure (`applications/server/internal/domains/`):
-- `auth`: User authentication, JWT issuance, refresh token rotation, TOTP 2FA, password hashing.
-- `profile`: User account details, display IDs, avatars, phone numbers, terms acceptance.
-- `wallet`: Core append-only double-entry ledger, balance accounts, transactions, transfers.
-- `matchmaking`: Player queues (by game, seats, stake), Elo rating matching, friend lobbies.
-- `game`: Live game room lifecycle, WebSocket connection orchestration, turn timers, result persistence.
-- `engine`: Pure game rule engines (Chess, Checkers, Ludo, Carrom) with zero database dependencies.
-- `economy`: 90/10 split calculations, fee waterfall, unilevel affiliates, director share statement close.
-- `merchant`: 7-stage merchant accounts, inventory minting, sell terminal, buy-back requests, P2P chat.
-- `payout`: Withdrawal workflows, cooling periods, bank/USDT TRC20 processing, multi-admin maker-checker.
-- `tron`: TRON blockchain gateway, TronLink signature linking, block scanner, sweep worker, quorum client.
-- `kyc`: User identity verification claims, document uploads, admin review queue, affiliate lock release.
-- `risk`: Anti-fraud rules, collusion detection (repeated pairs), suspicious velocity, account hold flags.
-- `platform`: Emergency kill-switches, platform alerts, system spend approvals.
-- `support`: Player customer support desk, ticketing lifecycle, staff assignments, internal notes.
-- `notification`: Administrative badge counts, staff event feeds, player socket toast notifications.
+`auth`: User authentication, JWT issuance, refresh token rotation, TOTP 2FA, password hashing.
+`profile`: User account details, display IDs, avatars, phone numbers, terms acceptance.
+`wallet`: Core append-only double-entry ledger, balance accounts, transactions, transfers.
+`matchmaking`: Player queues (by game, seats, stake), Elo rating matching, friend lobbies.
+`game`: Live game room lifecycle, WebSocket connection orchestration, turn timers, result persistence.
+`engine`: Pure game rule engines (Chess, Checkers, Ludo, Carrom) with zero database dependencies.
+`economy`: 90/10 split calculations, fee waterfall, unilevel affiliates, director share statement close.
+`merchant`: 7-stage merchant accounts, inventory minting, sell terminal, buy-back requests, P2P chat.
+`payout`: Withdrawal workflows, cooling periods, bank/USDT TRC20 processing, multi-admin maker-checker.
+`tron`: TRON blockchain gateway, TronLink signature linking, block scanner, sweep worker, quorum client.
+`kyc`: User identity verification claims, document uploads, admin review queue, affiliate lock release.
+`risk`: Anti-fraud rules, collusion detection (repeated pairs), suspicious velocity, account hold flags.
+`platform`: Emergency kill-switches, platform alerts, system spend approvals.
+`support`: Player customer support desk, ticketing lifecycle, staff assignments, internal notes.
+`notification`: Administrative badge counts, staff event feeds, player socket toast notifications.
 
 
-4. FRONTEND ARCHITECTURE (NEXT.JS & REACT)
---------------------------------------------------------------------------------
+FRONTEND ARCHITECTURE (NEXT.JS & REACT)
 The frontend is built using Next.js 15 and React 19, utilizing the App Router architecture.
 
 Key Technologies & Standards:
-- Framework: Next.js (App Router, Server Components + Client Components where interactive)
-- Styling: Tailwind CSS with customized theme tokens (CSS custom properties)
-- UI Primitives: Reusable, accessible components located in `@/components/ui`
-- Responsive Design: Enforced mobile-first responsive viewport supporting screens down to 320px width
-- State & Real-Time Sync: WebSocket clients with reconnect backoff and optimistic state management
-- Asset Optimization: Hand-crafted SVG/Canvas game art, responsive WebP/AVIF images, piece sprites
+Framework: Next.js (App Router, Server Components + Client Components where interactive)
+Styling: Tailwind CSS with customized theme tokens (CSS custom properties)
+UI Primitives: Reusable, accessible components located in `@/components/ui`
+Responsive Design: Enforced mobile-first responsive viewport supporting screens down to 320px width
+State & Real-Time Sync: WebSocket clients with reconnect backoff and optimistic state management
+Asset Optimization: Hand-crafted SVG/Canvas game art, responsive WebP/AVIF images, piece sprites
 
 
-5. NETWORKING AND REAL-TIME COMMUNICATION
---------------------------------------------------------------------------------
+NETWORKING AND REAL-TIME COMMUNICATION
 Communication between client and backend happens across two primary channels:
 
-A. HTTP REST APIs:
-   - Used for stateless operations: authentication, profile management, ledger history,
+HTTP REST APIs:
+   Used for stateless operations: authentication, profile management, ledger history,
      deposit/withdrawal requests, merchant transactions, support desk tickets, and admin operations.
-   - Standard JSON request and response payloads with status codes (200, 201, 400, 401, 403, 404, 409, 429).
-   - Decimal string representation for financial amounts to guarantee zero precision loss.
+   Standard JSON request and response payloads with status codes (200, 201, 400, 401, 403, 404, 409, 429).
+   Decimal string representation for financial amounts to guarantee zero precision loss.
 
-B. Persistent WebSockets:
-   - Real-Time Game Rooms: Dedicated WebSocket endpoint (`/ws/games/{id}`) where game actions
+Persistent WebSockets:
+   Real-Time Game Rooms: Dedicated WebSocket endpoint (`/ws/games/{id}`) where game actions
      (`move`, `roll`, `resign`, `ping`) and state broadcasts (`STATE`, `ERROR`, `FORFEIT`, `RESULT`) stream.
-   - Player Live Notice Socket: Background socket for authenticated users to receive live toasts
+   Player Live Notice Socket: Background socket for authenticated users to receive live toasts
      regarding payouts, affiliate earnings unlocks, withdrawal status updates, and KYC decisions.
-   - Merchant & Staff Chat Socket: Real-time peer-to-peer chat for merchant coordination and support desk.
+   Merchant & Staff Chat Socket: Real-time peer-to-peer chat for merchant coordination and support desk.
 
 
-6. SECURITY AND DATA ISOLATION BOUNDARIES
---------------------------------------------------------------------------------
-- Database Isolation: PostgreSQL transactions with `SELECT ... FOR UPDATE` row-level locks
+SECURITY AND DATA ISOLATION BOUNDARIES
+Database Isolation: PostgreSQL transactions with `SELECT ... FOR UPDATE` row-level locks
   ensure race-condition-free financial operations and game room transitions.
-- Configuration Isolation: Zero inline environment variable reads in business logic.
+Configuration Isolation: Zero inline environment variable reads in business logic.
   Configuration is parsed solely at startup via root packages (`internal/common/config` in server,
   `src/utils/env.ts` in web).
-- Game Engine Purity: Rule engines are isolated pure functions implementing the `Engine` interface.
+Game Engine Purity: Rule engines are isolated pure functions implementing the `Engine` interface.
   Engines cannot access the database, network, or filesystem, ensuring deterministic simulation.
-- Auditability: All administrative actions (mints, fee updates, emergency switches, document views,
+Auditability: All administrative actions (mints, fee updates, emergency switches, document views,
   support escalations) write append-only audit records with actor IDs and timestamps.

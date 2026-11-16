@@ -1,63 +1,57 @@
-================================================================================
 BATTLEX PLATFORM - MERCHANT SYSTEM AND P2P OPERATIONS
-================================================================================
 
-1. ROLE OF MERCHANTS IN THE ECOSYSTEM
---------------------------------------------------------------------------------
+ROLE OF MERCHANTS IN THE ECOSYSTEM
 Merchants act as decentralized franchise liquidity partners in the BATTLEX ecosystem.
 Because traditional online payment gateways often restrict gaming or operate with
 prohibitive fees in certain target jurisdictions, merchants facilitate local fiat
 cash-in (deposits) and buy-back (cash-outs) directly with players.
 
 Key Principles:
-- Pre-Funded Inventory: Merchants must purchase and pre-fund coin inventory via verified
+Pre-Funded Inventory: Merchants must purchase and pre-fund coin inventory via verified
   external bank/crypto deposits before they can sell coins to players.
-- No Self-Sale: A merchant cannot sell coins to their own user account.
-- Spread Revenue: Merchants make profit primarily through the off-platform spread
+No Self-Sale: A merchant cannot sell coins to their own user account.
+Spread Revenue: Merchants make profit primarily through the off-platform spread
   between what they charge players to buy coins vs what they pay to buy back coins.
-- Segregated Accounts: A merchant user maintains both a `merchant` inventory account
+Segregated Accounts: A merchant user maintains both a `merchant` inventory account
   and a separate personal `player` account.
 
 
-2. THE 7 MERCHANT STAGES & PROGRESSION
---------------------------------------------------------------------------------
+THE 7 MERCHANT STAGES & PROGRESSION
 Merchants progress through seven recognized operating stages:
-1. Entry Merchant
-2. Sub Merchant Level 1 (Sub L1)
-3. Sub Merchant Level 2 (Sub L2)
-4. Sub Merchant Level 3 (Sub L3)
-5. Main Merchant Level 1 (Main L1)
-6. Main Merchant Level 2 (Main L2)
-7. Main Merchant Level 3 (Main L3)
+Entry Merchant
+Sub Merchant Level 1 (Sub L1)
+Sub Merchant Level 2 (Sub L2)
+Sub Merchant Level 3 (Sub L3)
+Main Merchant Level 1 (Main L1)
+Main Merchant Level 2 (Main L2)
+Main Merchant Level 3 (Main L3)
 
 Stage Progression & Eligibility:
-- Entry Stage: Earns spread income only. No eligibility for platform pool revenue.
-- Sub L1 through Main L3: Eligible to receive equal shares of platform-wide merchant level pools.
-- Promotion Rules:
-  * Promotions are evaluated automatically at UTC month close based on the merchant's
+Entry Stage: Earns spread income only. No eligibility for platform pool revenue.
+Sub L1 through Main L3: Eligible to receive equal shares of platform-wide merchant level pools.
+Promotion Rules:
+  Promotions are evaluated automatically at UTC month close based on the merchant's
     total verified sell-to-player volume during that calendar month.
-  * A merchant can advance at most ONE stage per month.
-  * No automatic demotion: Once a stage is achieved, the merchant retains it unless
+  A merchant can advance at most ONE stage per month.
+  No automatic demotion: Once a stage is achieved, the merchant retains it unless
     suspended by administrators for policy violations.
 
 
-3. INVENTORY MINTING AND RESTOCKING
---------------------------------------------------------------------------------
-A. Initial Entry Merchant Creation:
-   - Prospective merchant deposits verified funds (e.g. $150 USD equivalent) to platform operators.
-   - Admin Maker creates merchant request with external deposit receipt/transaction reference.
-   - Admin Checker (with TOTP) verifies funds receipt and approves.
-   - System atomically creates merchant record and mints initial inventory:
+INVENTORY MINTING AND RESTOCKING
+Initial Entry Merchant Creation:
+   Prospective merchant deposits verified funds (e.g. $150 USD equivalent) to platform operators.
+   Admin Maker creates merchant request with external deposit receipt/transaction reference.
+   Admin Checker (with TOTP) verifies funds receipt and approves.
+   System atomically creates merchant record and mints initial inventory:
        Debit:  `treasury`           (-15,000 coins)
        Credit: `merchant.available` (+15,000 coins)
 
-B. Restocking Existing Inventory:
-   - When a merchant's inventory runs low, they repeat the two-admin mint request.
-   - Alternatively, performing player buy-backs automatically replenishes merchant inventory!
+Restocking Existing Inventory:
+   When a merchant's inventory runs low, they repeat the two-admin mint request.
+   Alternatively, performing player buy-backs automatically replenishes merchant inventory!
 
 
-4. SELL-TO-PLAYER WORKFLOW (CASH-IN)
---------------------------------------------------------------------------------
+SELL-TO-PLAYER WORKFLOW (CASH-IN)
 Step 1: Player contacts merchant (in-person, phone, messaging, or P2P in-app chat)
         and sends local fiat funds (e.g. LKR 3,450 for 1,000 coins).
 Step 2: Merchant opens the Merchant Terminal in the web portal.
@@ -72,8 +66,7 @@ Step 6: An immutable digital transaction receipt is generated, recording the mer
 Step 7: The player's balance updates instantly; player can immediately stake or play.
 
 
-5. BUY-BACK WORKFLOW (CASH-OUT)
---------------------------------------------------------------------------------
+BUY-BACK WORKFLOW (CASH-OUT)
 To protect players from unauthorized withdrawals or fraudulent merchant claims,
 buy-backs require player authorization via password:
 
@@ -92,55 +85,52 @@ Step 6: The server validates the password, checks the player's daily withdrawal 
 Step 7: The merchant pays the agreed fiat amount to the player off-platform (e.g. bank transfer or cash).
 
 Safety Limits:
-- Buy-backs count directly toward the player's UTC-day and 30-day withdrawal caps.
-- If a player's password is submitted incorrectly 3 times, or the 10-minute window expires,
+Buy-backs count directly toward the player's UTC-day and 30-day withdrawal caps.
+If a player's password is submitted incorrectly 3 times, or the 10-minute window expires,
   the buy-back request is automatically aborted.
 
 
-6. MONTHLY MERCHANT LEVEL POOLS DISTRIBUTION
---------------------------------------------------------------------------------
+MONTHLY MERCHANT LEVEL POOLS DISTRIBUTION
 As part of the platform's 10% game commission waterfall:
-- 5.25% of all platform game fees accrue across 6 level pools:
-  * Sub L1 Pool: 0.50% of fee
-  * Sub L2 Pool: 1.00% of fee
-  * Sub L3 Pool: 2.00% of fee (shared by Sub L3 and all Main merchants)
-  * Main L1 Pool: 0.25% of fee
-  * Main L2 Pool: 0.50% of fee
-  * Main L3 Pool: 1.00% of fee
+5.25% of all platform game fees accrue across 6 level pools:
+  Sub L1 Pool: 0.50% of fee
+  Sub L2 Pool: 1.00% of fee
+  Sub L3 Pool: 2.00% of fee (shared by Sub L3 and all Main merchants)
+  Main L1 Pool: 0.25% of fee
+  Main L2 Pool: 0.50% of fee
+  Main L3 Pool: 1.00% of fee
 
 Distribution Rules:
-- Evaluated at the end of every UTC calendar month.
-- Each pool's accumulated coins are divided EQUALLY among all active, eligible merchants
+Evaluated at the end of every UTC calendar month.
+Each pool's accumulated coins are divided EQUALLY among all active, eligible merchants
   at that stage, regardless of individual volume!
-- Shares round down to integer micro-coins; division residuals roll into the Net Profit Pool.
-- Empty Pools: If no merchants currently qualify for a specific level, that pool's balance
+Shares round down to integer micro-coins; division residuals roll into the Net Profit Pool.
+Empty Pools: If no merchants currently qualify for a specific level, that pool's balance
   is swept into the Net Profit Pool.
-- Suspended Merchants: A suspended merchant forfeits all pool earnings.
+Suspended Merchants: A suspended merchant forfeits all pool earnings.
 
 
-7. INVENTORY REDEMPTION AND REFUNDS
---------------------------------------------------------------------------------
-A. Inventory Redemption (Merchant Cash-Out):
-   - A merchant wishing to cash out excess coin inventory submits a Redemption Request.
-   - Coins are burned on the ledger; the platform pays out fiat/crypto at the base peg:
+INVENTORY REDEMPTION AND REFUNDS
+Inventory Redemption (Merchant Cash-Out):
+   A merchant wishing to cash out excess coin inventory submits a Redemption Request.
+   Coins are burned on the ledger; the platform pays out fiat/crypto at the base peg:
        Debit:  `merchant.available` (-Coins)
        Credit: `treasury`           (+Coins)
-   - Requires two-admin maker-checker review with TOTP and recorded payout reference.
+   Requires two-admin maker-checker review with TOTP and recorded payout reference.
 
-B. Entry Merchant Refund:
-   - If an Entry Merchant decides to leave the platform before selling their initial inventory,
+Entry Merchant Refund:
+   If an Entry Merchant decides to leave the platform before selling their initial inventory,
      they can request a refund.
-   - Refund calculation: The refund is reduced proportionately for any coins already sold
+   Refund calculation: The refund is reduced proportionately for any coins already sold
      to prevent double payment.
 
 
-8. P2P MERCHANT CHAT, DIRECTORY & MODERATION
---------------------------------------------------------------------------------
-- Directory: Promoted active merchants appear in the merchant directory (`/wallet/merchants`),
+P2P MERCHANT CHAT, DIRECTORY & MODERATION
+Directory: Promoted active merchants appear in the merchant directory (`/wallet/merchants`),
   displaying their verified payment accounts (Bank details, USDT-TRC20 address).
-- In-App Chat: Players can open a secure chat thread directly with a merchant to negotiate
+In-App Chat: Players can open a secure chat thread directly with a merchant to negotiate
   and coordinate fiat bank transfers.
-- Attachments: Supports JPEG/PNG/WebP bank deposit slips (under 5 MB) stored privately.
-- Staff Moderation: Platform staff (admins) have full search and monitor visibility across
+Attachments: Supports JPEG/PNG/WebP bank deposit slips (under 5 MB) stored privately.
+Staff Moderation: Platform staff (admins) have full search and monitor visibility across
   all chat threads to prevent fraud, abusive conduct, or chargeback scams.
-- Staff Actions: Admins can hide illicit messages or threads with an audited reason trail.
+Staff Actions: Admins can hide illicit messages or threads with an audited reason trail.

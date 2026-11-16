@@ -1,88 +1,84 @@
-================================================================================
 BATTLEX PLATFORM - API ENDPOINTS AND WEBSOCKET PROTOCOL REFERENCE
-================================================================================
 
-1. REST API ENDPOINTS DIRECTORY
---------------------------------------------------------------------------------
+REST API ENDPOINTS DIRECTORY
 
-A. Authentication Domain (`/api/auth`)
-- `POST /api/auth/register`           : Create a new player account (optional `ref` code).
-- `POST /api/auth/login`              : Authenticate with username/password; returns access & refresh tokens.
-- `POST /api/auth/refresh`            : Rotate refresh token; returns new access & refresh tokens.
-- `POST /api/auth/logout`             : Invalidate current refresh token family.
-- `POST /api/auth/totp/setup`         : Generate new TOTP secret & QR code.
-- `POST /api/auth/totp/enable`        : Confirm TOTP code and enable 2FA on account.
-- `POST /api/auth/totp/verify`        : Verify 2FA code for session elevation.
+Authentication Domain (`/api/auth`)
+`POST /api/auth/register`           : Create a new player account (optional `ref` code).
+`POST /api/auth/login`              : Authenticate with username/password; returns access & refresh tokens.
+`POST /api/auth/refresh`            : Rotate refresh token; returns new access & refresh tokens.
+`POST /api/auth/logout`             : Invalidate current refresh token family.
+`POST /api/auth/totp/setup`         : Generate new TOTP secret & QR code.
+`POST /api/auth/totp/enable`        : Confirm TOTP code and enable 2FA on account.
+`POST /api/auth/totp/verify`        : Verify 2FA code for session elevation.
 
-B. User & Profile Domain (`/api/profile`)
-- `GET  /api/profile`                 : Fetch current user profile, display ID, KYC status.
-- `PUT  /api/profile`                 : Update profile details, avatar, notification preferences.
-- `POST /api/profile/referral/claim`  : Bind referral code within 7-day grace period.
+User & Profile Domain (`/api/profile`)
+`GET  /api/profile`                 : Fetch current user profile, display ID, KYC status.
+`PUT  /api/profile`                 : Update profile details, avatar, notification preferences.
+`POST /api/profile/referral/claim`  : Bind referral code within 7-day grace period.
 
-C. Wallet & Ledger Domain (`/api/wallet`)
-- `GET  /api/wallet/balances`         : Fetch user balances (`available`, `in_play`, `withdraw_pending`, `affiliate_locked`).
-- `GET  /api/wallet/transactions`     : Paginated ledger statement entries and receipt history.
-- `GET  /api/wallet/rates`            : Active reference exchange rates (USDT, LKR, TRX).
+Wallet & Ledger Domain (`/api/wallet`)
+`GET  /api/wallet/balances`         : Fetch user balances (`available`, `in_play`, `withdraw_pending`, `affiliate_locked`).
+`GET  /api/wallet/transactions`     : Paginated ledger statement entries and receipt history.
+`GET  /api/wallet/rates`            : Active reference exchange rates (USDT, LKR, TRX).
 
-D. Matchmaking & Games Domain (`/api/matchmaking`, `/api/games`)
-- `POST /api/matchmaking/join`        : Join matchmaking queue (`game`, `seat_count`, `stake`).
-- `POST /api/matchmaking/leave`       : Cancel active queue search.
-- `POST /api/matchmaking/lobbies`     : Create private Friends Lobby; returns room code.
-- `POST /api/matchmaking/lobbies/join`: Join private lobby using 6-character room code.
-- `GET  /api/games/{id}`              : Get game summary, participants, stake, and state.
-- `GET  /api/games/history`           : User's completed game match history and win/loss records.
+Matchmaking & Games Domain (`/api/matchmaking`, `/api/games`)
+`POST /api/matchmaking/join`        : Join matchmaking queue (`game`, `seat_count`, `stake`).
+`POST /api/matchmaking/leave`       : Cancel active queue search.
+`POST /api/matchmaking/lobbies`     : Create private Friends Lobby; returns room code.
+`POST /api/matchmaking/lobbies/join`: Join private lobby using 6-character room code.
+`GET  /api/games/{id}`              : Get game summary, participants, stake, and state.
+`GET  /api/games/history`           : User's completed game match history and win/loss records.
 
-E. TRON Cryptocurrency Domain (`/api/wallet/tron`)
-- `GET  /api/wallet/tron/config`      : Public TRON configuration, explorer URL, deposit limits.
-- `POST /api/wallet/tron/link-challenge`: Request signing nonce challenge for TronLink.
-- `POST /api/wallet/tron/link-confirm`  : Submit signature to bind TRON address to account.
-- `POST /api/wallet/tron/withdraw`      : Request native TRX on-chain withdrawal.
+TRON Cryptocurrency Domain (`/api/wallet/tron`)
+`GET  /api/wallet/tron/config`      : Public TRON configuration, explorer URL, deposit limits.
+`POST /api/wallet/tron/link-challenge`: Request signing nonce challenge for TronLink.
+`POST /api/wallet/tron/link-confirm`  : Submit signature to bind TRON address to account.
+`POST /api/wallet/tron/withdraw`      : Request native TRX on-chain withdrawal.
 
-F. Withdrawals Domain (`/api/payout`)
-- `POST /api/payout/withdraw`         : Request manual Bank or USDT-TRC20 withdrawal.
-- `GET  /api/payout/destinations`     : User's saved withdrawal bank/crypto destinations.
-- `POST /api/payout/destinations`     : Register new destination (starts 48-hour cooling).
-- `DELETE /api/payout/requests/{id}`  : Cancel pending withdrawal (prior to first approval).
+Withdrawals Domain (`/api/payout`)
+`POST /api/payout/withdraw`         : Request manual Bank or USDT-TRC20 withdrawal.
+`GET  /api/payout/destinations`     : User's saved withdrawal bank/crypto destinations.
+`POST /api/payout/destinations`     : Register new destination (starts 48-hour cooling).
+`DELETE /api/payout/requests/{id}`  : Cancel pending withdrawal (prior to first approval).
 
-G. Merchant Operations Domain (`/api/merchant`, `/api/merchants`)
-- `GET  /api/merchants/directory`     : Public list of active, promoted merchants.
-- `GET  /api/merchants/{id}/profile`  : Merchant details and active payment accounts.
-- `GET  /api/merchant/terminal`       : Merchant dashboard, inventory balance, monthly sales volume.
-- `POST /api/merchant/sell`           : Sell coins to player by Display ID.
-- `POST /api/merchant/buyback`        : Initiate password-confirmed buy-back request.
-- `POST /api/merchant/buyback/{id}/confirm` : Player submits password to authorize buy-back.
-- `POST /api/merchant/redemption`     : Request inventory cash-out (burn).
-- `GET  /api/merchant/statements`     : Merchant monthly statements and pool distributions.
+Merchant Operations Domain (`/api/merchant`, `/api/merchants`)
+`GET  /api/merchants/directory`     : Public list of active, promoted merchants.
+`GET  /api/merchants/{id}/profile`  : Merchant details and active payment accounts.
+`GET  /api/merchant/terminal`       : Merchant dashboard, inventory balance, monthly sales volume.
+`POST /api/merchant/sell`           : Sell coins to player by Display ID.
+`POST /api/merchant/buyback`        : Initiate password-confirmed buy-back request.
+`POST /api/merchant/buyback/{id}/confirm` : Player submits password to authorize buy-back.
+`POST /api/merchant/redemption`     : Request inventory cash-out (burn).
+`GET  /api/merchant/statements`     : Merchant monthly statements and pool distributions.
 
-H. Customer Support Desk Domain (`/api/support`, `/api/admin/support`)
-- `GET  /api/support/tickets`         : List player's own support tickets.
-- `POST /api/support/tickets`         : Create new support ticket (`category`, `subject`, `message`).
-- `GET  /api/support/tickets/{id}`    : View ticket conversation thread.
-- `POST /api/support/tickets/{id}/messages` : Post message to ticket thread.
-- `POST /api/support/tickets/{id}/close`    : Close resolved ticket.
-- `POST /api/support/attachments`     : Upload screenshot/document attachment (JPEG/PNG/WebP < 5MB).
-- `GET  /api/admin/support/tickets`   : Admin queue of all platform support tickets.
-- `POST /api/admin/support/tickets/{id}/assign` : Assign ticket to staff member.
-- `POST /api/admin/support/tickets/{id}/notes`  : Post internal staff note.
-- `POST /api/admin/support/tickets/{id}/escalate`: Escalate ticket to super admins.
+Customer Support Desk Domain (`/api/support`, `/api/admin/support`)
+`GET  /api/support/tickets`         : List player's own support tickets.
+`POST /api/support/tickets`         : Create new support ticket (`category`, `subject`, `message`).
+`GET  /api/support/tickets/{id}`    : View ticket conversation thread.
+`POST /api/support/tickets/{id}/messages` : Post message to ticket thread.
+`POST /api/support/tickets/{id}/close`    : Close resolved ticket.
+`POST /api/support/attachments`     : Upload screenshot/document attachment (JPEG/PNG/WebP < 5MB).
+`GET  /api/admin/support/tickets`   : Admin queue of all platform support tickets.
+`POST /api/admin/support/tickets/{id}/assign` : Assign ticket to staff member.
+`POST /api/admin/support/tickets/{id}/notes`  : Post internal staff note.
+`POST /api/admin/support/tickets/{id}/escalate`: Escalate ticket to super admins.
 
-I. Administration & Governance Domain (`/api/admin`)
-- `POST /api/admin/mint/propose`      : Propose coin mint to user/merchant.
-- `POST /api/admin/mint/approve`      : Approve coin mint (checker).
-- `GET  /api/admin/ledger/reconcile`  : Run/inspect continuous ledger reconciliation audit.
-- `GET  /api/admin/kyc/queue`         : Review pending user KYC verification submissions.
-- `POST /api/admin/kyc/{id}/decide`   : Verify or reject KYC claim.
-- `GET  /api/admin/risk/flags`        : Inspect automated anti-fraud flags.
-- `GET  /api/admin/switches`          : Read emergency platform kill-switches.
-- `POST /api/admin/switches/toggle`   : Toggle emergency platform kill-switch.
-- `POST /api/admin/economy/proposals` : Submit versioned economy waterfall change proposal.
-- `POST /api/admin/economy/proposals/{id}/approve` : Approve economy proposal (super admin).
+Administration & Governance Domain (`/api/admin`)
+`POST /api/admin/mint/propose`      : Propose coin mint to user/merchant.
+`POST /api/admin/mint/approve`      : Approve coin mint (checker).
+`GET  /api/admin/ledger/reconcile`  : Run/inspect continuous ledger reconciliation audit.
+`GET  /api/admin/kyc/queue`         : Review pending user KYC verification submissions.
+`POST /api/admin/kyc/{id}/decide`   : Verify or reject KYC claim.
+`GET  /api/admin/risk/flags`        : Inspect automated anti-fraud flags.
+`GET  /api/admin/switches`          : Read emergency platform kill-switches.
+`POST /api/admin/switches/toggle`   : Toggle emergency platform kill-switch.
+`POST /api/admin/economy/proposals` : Submit versioned economy waterfall change proposal.
+`POST /api/admin/economy/proposals/{id}/approve` : Approve economy proposal (super admin).
 
 
-2. WEBSOCKET PROTOCOL SPECIFICATION
---------------------------------------------------------------------------------
+WEBSOCKET PROTOCOL SPECIFICATION
 
-A. Game Room Socket (`/ws/games/{id}?token={game_token}`)
+Game Room Socket (`/ws/games/{id}?token={game_token}`)
 The game socket powers real-time gameplay between matched players:
 
 Message Envelope Structure:
@@ -94,54 +90,54 @@ Message Envelope Structure:
 ```
 
 Standard Message Types:
-1. `ACTION` (Client -> Server):
-   - Submits a gameplay action on the player's turn.
-   - Examples:
-     * Chess Move:
+`ACTION` (Client -> Server):
+   Submits a gameplay action on the player's turn.
+   Examples:
+     Chess Move:
        `{"type": "action", "payload": {"type": "move", "payload": {"from": "e2", "to": "e4"}}}`
-     * Ludo Roll:
+     Ludo Roll:
        `{"type": "action", "payload": {"type": "roll"}}`
-     * Ludo Move:
+     Ludo Move:
        `{"type": "action", "payload": {"type": "move", "payload": {"token": 0}}}`
-     * Checkers Move:
+     Checkers Move:
        `{"type": "action", "payload": {"type": "move", "payload": {"path": [9, 14]}}}`
-     * Carrom Strike:
+     Carrom Strike:
        `{"type": "action", "payload": {"type": "strike", "payload": {"pos": 100, "angle": 45, "force": 80}}}`
-     * Resign:
+     Resign:
        `{"type": "action", "payload": {"type": "resign"}}`
 
-2. `STATE` (Server -> Client):
-   - Authoritative broadcast sent upon connection and after every legal state modification.
-   - Contains:
-     * `status`: Current game status (`"waiting"`, `"active"`, `"won"`, `"draw"`, etc.).
-     * `turn`: Seat ID of player whose turn it is.
-     * `turn_ms_left`: Milliseconds remaining on the active turn timer.
-     * `turn_ms_total`: Full duration of the turn timer.
-     * `board`: Complete serializable game state.
-     * `move_history`: List of moves played.
+`STATE` (Server -> Client):
+   Authoritative broadcast sent upon connection and after every legal state modification.
+   Contains:
+     `status`: Current game status (`"waiting"`, `"active"`, `"won"`, `"draw"`, etc.).
+     `turn`: Seat ID of player whose turn it is.
+     `turn_ms_left`: Milliseconds remaining on the active turn timer.
+     `turn_ms_total`: Full duration of the turn timer.
+     `board`: Complete serializable game state.
+     `move_history`: List of moves played.
 
-3. `ERROR` (Server -> Client):
-   - Sent when a client submits an illegal move, acts out of turn, or sends malformed payloads.
-   - Client display board shakes or highlights invalid action without altering board state.
+`ERROR` (Server -> Client):
+   Sent when a client submits an illegal move, acts out of turn, or sends malformed payloads.
+   Client display board shakes or highlights invalid action without altering board state.
 
-4. `RESULT` (Server -> Client):
-   - Broadcast when the game reaches a terminal state.
-   - Names the winner seat ID, finishing placements, reason, and net pot amount.
+`RESULT` (Server -> Client):
+   Broadcast when the game reaches a terminal state.
+   Names the winner seat ID, finishing placements, reason, and net pot amount.
 
-5. `PING` / `PONG`:
-   - Heartbeat frames exchanged every 15-30 seconds to maintain connection health.
+`PING` / `PONG`:
+   Heartbeat frames exchanged every 15-30 seconds to maintain connection health.
 
 
-B. Player Live Notice Socket (`/ws/notices?token={access_token}`)
+Player Live Notice Socket (`/ws/notices?token={access_token}`)
 Background socket that delivers private account events to online players:
-- `payout_received`   : Emitted when staked game settlement completes and credits won coins.
-- `reward_received`   : Emitted when an affiliate referral commission is credited or unlocked.
-- `withdrawal_decision`: Emitted when an external cash-out request is approved, paid, or rejected.
-- `kyc_decision`      : Emitted when user's KYC submission is verified or rejected.
+`payout_received`   : Emitted when staked game settlement completes and credits won coins.
+`reward_received`   : Emitted when an affiliate referral commission is credited or unlocked.
+`withdrawal_decision`: Emitted when an external cash-out request is approved, paid, or rejected.
+`kyc_decision`      : Emitted when user's KYC submission is verified or rejected.
 
 
-C. Staff Event Socket (`/ws/staff?token={access_token}`)
+Staff Event Socket (`/ws/staff?token={access_token}`)
 Administrative event stream delivering live operational metrics:
-- `staff.notification`: Live bell notifications for pending withdrawals, mints, and KYC claims.
-- `alert.raised`      : Incident alert banner triggers (reconciliation mismatch, low float).
-- `chat.message`      : Live P2P merchant chat and support desk messages.
+`staff.notification`: Live bell notifications for pending withdrawals, mints, and KYC claims.
+`alert.raised`      : Incident alert banner triggers (reconciliation mismatch, low float).
+`chat.message`      : Live P2P merchant chat and support desk messages.

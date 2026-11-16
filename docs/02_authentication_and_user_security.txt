@@ -1,76 +1,71 @@
-================================================================================
 BATTLEX PLATFORM - AUTHENTICATION, AUTHORIZATION AND USER SECURITY
-================================================================================
 
-1. USER AUTHENTICATION AND TOKEN LIFECYCLE
---------------------------------------------------------------------------------
+USER AUTHENTICATION AND TOKEN LIFECYCLE
 User authentication on BATTLEX is built around stateless JSON Web Tokens (JWT)
 for API requests combined with stateful refresh token rotation stored in the database.
 
-A. Access Tokens:
-   - Format: Standard signed JWT (HMAC-SHA256).
-   - Lifetime: Short-lived (typically 15 minutes to 1 hour depending on environment).
-   - Payload Claims:
-     * `sub`: Unique User UUID.
-     * `display_id`: 6 to 8 character alphanumeric public user identifier (e.g. "BX9842").
-     * `roles`: Array of assigned system roles (e.g. `["player"]`, `["merchant"]`, `["admin"]`).
-     * `exp`: Unix timestamp of expiration.
-     * `iat`: Unix timestamp of issuance.
-   - Header Authorization: Sent via standard `Authorization: Bearer <token>` HTTP header
+Access Tokens:
+   Format: Standard signed JWT (HMAC-SHA256).
+   Lifetime: Short-lived (typically 15 minutes to 1 hour depending on environment).
+   Payload Claims:
+     `sub`: Unique User UUID.
+     `display_id`: 6 to 8 character alphanumeric public user identifier (e.g. "BX9842").
+     `roles`: Array of assigned system roles (e.g. `["player"]`, `["merchant"]`, `["admin"]`).
+     `exp`: Unix timestamp of expiration.
+     `iat`: Unix timestamp of issuance.
+   Header Authorization: Sent via standard `Authorization: Bearer <token>` HTTP header
      or as a query parameter for WebSocket handshakes (`?token=<token>`).
 
-B. Refresh Tokens & Rotation:
-   - Lifetime: Long-lived (typically 7 to 30 days).
-   - Rotation Policy: Every time an access token is refreshed via `/api/auth/refresh`,
+Refresh Tokens & Rotation:
+   Lifetime: Long-lived (typically 7 to 30 days).
+   Rotation Policy: Every time an access token is refreshed via `/api/auth/refresh`,
      the presented refresh token is immediately invalidated (consumed) and a new refresh
      token is returned alongside the new access token.
-   - Token Family / Reuse Detection: If an expired or previously consumed refresh token
+   Token Family / Reuse Detection: If an expired or previously consumed refresh token
      is submitted, the server detects potential token theft, revokes the entire token family,
      and forces the user to log in again with credentials.
 
 
-2. PASSWORD STORAGE AND SECURITY
---------------------------------------------------------------------------------
-- Passwords are never stored in plaintext or reversible encryption.
-- Hashing Algorithm: `bcrypt` with a cost factor of 12 (or argon2id in upgraded profiles).
-- Enforced Password Policy:
-  * Minimum length of 8 characters.
-  * Must contain at least one uppercase letter, one lowercase letter, one number, and one symbol.
-- Rate Limiting: Brute-force protection on the `/api/auth/login` endpoint restricts failed
+PASSWORD STORAGE AND SECURITY
+Passwords are never stored in plaintext or reversible encryption.
+Hashing Algorithm: `bcrypt` with a cost factor of 12 (or argon2id in upgraded profiles).
+Enforced Password Policy:
+  Minimum length of 8 characters.
+  Must contain at least one uppercase letter, one lowercase letter, one number, and one symbol.
+Rate Limiting: Brute-force protection on the `/api/auth/login` endpoint restricts failed
   login attempts per IP and per username/email, enforcing exponential backoff after multiple
   consecutive failures.
 
 
-3. ROLE-BASED ACCESS CONTROL (RBAC)
---------------------------------------------------------------------------------
+ROLE-BASED ACCESS CONTROL (RBAC)
 The platform defines five distinct roles:
 
-1. `player`:
-   - Standard user role assigned upon registration.
-   - Capabilities: Join matchmaking queues, play free and staked games, create private lobbies,
+`player`:
+   Standard user role assigned upon registration.
+   Capabilities: Join matchmaking queues, play free and staked games, create private lobbies,
      deposit/withdraw funds, view own transaction ledger, access player support desk, link TronLink wallet.
 
-2. `merchant`:
-   - Franchise partner role for local liquidity provisioning.
-   - Capabilities: Access merchant terminal, maintain funded coin inventory, sell coins to players
+`merchant`:
+   Franchise partner role for local liquidity provisioning.
+   Capabilities: Access merchant terminal, maintain funded coin inventory, sell coins to players
      by Display ID, execute password-confirmed buy-backs, submit deposit slips, access P2P merchant chat.
-   - Inherits player capabilities via an independent player account partition.
+   Inherits player capabilities via an independent player account partition.
 
-3. `investor` (Director):
-   - Executive stakeholder role.
-   - Capabilities: Access investor/director portal to inspect monthly company financial statements,
+`investor` (Director):
+   Executive stakeholder role.
+   Capabilities: Access investor/director portal to inspect monthly company financial statements,
      director register shares, platform-wide volume metrics, fee income totals, and off-platform payout records.
-   - Read-only access; cannot view individual player balances or game transactions.
+   Read-only access; cannot view individual player balances or game transactions.
 
-4. `admin`:
-   - Operational staff role.
-   - Capabilities: Review and verify KYC submissions, inspect the transaction ledger, propose mints/adjustments,
+`admin`:
+   Operational staff role.
+   Capabilities: Review and verify KYC submissions, inspect the transaction ledger, propose mints/adjustments,
      first-approve withdrawal requests, respond to customer support tickets, search P2P chat threads,
      moderate chat content, view fraud flags.
 
-5. `super_admin`:
-   - Platform governance and treasury executive role.
-   - Capabilities: Approve mints and adjustments (second admin), execute second-approval for withdrawals,
+`super_admin`:
+   Platform governance and treasury executive role.
+   Capabilities: Approve mints and adjustments (second admin), execute second-approval for withdrawals,
      broadcast TRON TRX transfers, propose and approve economy/fee waterfall changes, manage director register,
      toggle emergency platform switches, create and edit canned support responses.
 
@@ -80,40 +75,38 @@ or toggling emergency switches), the server does not rely solely on the token's 
 the database to confirm the user currently possesses active, unrevoked privileges.
 
 
-4. TWO-FACTOR AUTHENTICATION (TOTP)
---------------------------------------------------------------------------------
+TWO-FACTOR AUTHENTICATION (TOTP)
 BATTLEX implements Time-based One-Time Password (TOTP) authentication according to RFC 6238:
 
-A. Usage & Enforcement:
-   - Administrative Staff: Mandatory for sensitive actions. Proposing economy changes, approving
+Usage & Enforcement:
+   Administrative Staff: Mandatory for sensitive actions. Proposing economy changes, approving
      withdrawals, broadcasting TRX transfers, and releasing emergency switches require recent
      (within 5 minutes) session-bound TOTP verification.
-   - Players & Merchants: Optional extra security layer for login and high-value cash-outs.
+   Players & Merchants: Optional extra security layer for login and high-value cash-outs.
 
-B. Cryptographic Storage:
-   - TOTP secret keys are stored encrypted at rest using AES-GCM-256 with a dedicated server secret.
-   - Backup Recovery Codes: A set of one-time recovery codes is generated when 2FA is enabled.
+Cryptographic Storage:
+   TOTP secret keys are stored encrypted at rest using AES-GCM-256 with a dedicated server secret.
+   Backup Recovery Codes: A set of one-time recovery codes is generated when 2FA is enabled.
      Recovery codes are hashed (using SHA-256 with per-code salt) prior to database insertion;
      the raw codes are displayed to the user only once.
 
 
-5. SECURITY HOLDS AND ACCOUNT INTEGRITY
---------------------------------------------------------------------------------
+SECURITY HOLDS AND ACCOUNT INTEGRITY
 To mitigate the impact of credential compromise and session hijacking:
 
-A. 24-Hour Security Hold:
-   - Any modification to an account's primary security credentials (password change or email change)
+24-Hour Security Hold:
+   Any modification to an account's primary security credentials (password change or email change)
      automatically activates a 24-hour financial withdrawal block.
-   - During this window, game playing and merchant buying remain active, but outgoing withdrawal
+   During this window, game playing and merchant buying remain active, but outgoing withdrawal
      requests and merchant buy-backs are rejected.
 
-B. 48-Hour Address Cooling Period:
-   - When a player adds a new bank account, USDT-TRC20 address, or TRON TRX wallet, or modifies an
+48-Hour Address Cooling Period:
+   When a player adds a new bank account, USDT-TRC20 address, or TRON TRX wallet, or modifies an
      existing one, the destination enters a 48-hour cooling state.
-   - Withdrawals cannot be routed to a destination until the 48 hours have elapsed.
+   Withdrawals cannot be routed to a destination until the 48 hours have elapsed.
 
-C. Soft-Delete Compliance:
-   - Player and merchant accounts are never hard-deleted from the database.
-   - When an account is terminated or closed, it is marked as soft-deleted (`deleted_at` timestamp).
-   - This ensures that financial history, ledger balances, immutable game logs, and multi-tier
+Soft-Delete Compliance:
+   Player and merchant accounts are never hard-deleted from the database.
+   When an account is terminated or closed, it is marked as soft-deleted (`deleted_at` timestamp).
+   This ensures that financial history, ledger balances, immutable game logs, and multi-tier
      referral chains remain mathematically intact.
