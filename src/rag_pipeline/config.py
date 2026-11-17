@@ -8,6 +8,7 @@ load_dotenv()
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 OPENAI_API_URL = os.environ["OPENAI_API_URL"]
 EMBEDDING_MODEL = os.environ["EMBEDDING_MODEL"]
+AI_MODEL = os.environ["AI_MODEL"]
 
 CHROMA_API_KEY = os.environ["CHROMA_API_KEY"]
 CHROMA_TENANT = os.environ["CHROMA_TENANT"]

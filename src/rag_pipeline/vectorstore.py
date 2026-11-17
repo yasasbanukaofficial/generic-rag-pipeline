@@ -1,12 +1,12 @@
 from langchain_chroma import Chroma
 
-from config import (
+from rag_pipeline.config import (
     CHROMA_API_KEY,
     CHROMA_COLLECTION_NAME,
     CHROMA_DATABASE,
     CHROMA_TENANT,
 )
-from embeddings import build_embedding_model
+from rag_pipeline.embeddings import build_embedding_model
 
 # Constants
 PERSISTENT_DIR = "db/chroma_db"

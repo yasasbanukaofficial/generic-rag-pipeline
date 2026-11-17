@@ -1,6 +1,6 @@
 from langchain_openai import OpenAIEmbeddings
 
-from config import EMBEDDING_MODEL, OPENAI_API_KEY, OPENAI_API_URL
+from rag_pipeline.config import EMBEDDING_MODEL, OPENAI_API_KEY, OPENAI_API_URL
 
 
 def build_embedding_model():
