@@ -1,4 +1,4 @@
-import os, getpass
+import os
 
 from dotenv import load_dotenv
 from langchain_community.document_loaders import TextLoader, DirectoryLoader
@@ -10,6 +10,7 @@ load_dotenv()
 
 # Constants
 DOCS_PATH = "docs"
+PERSISTENT_DIR = "db/chroma_db"
 
 OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
 OPENAI_API_URL = os.environ["OPENAI_API_URL"]
@@ -78,36 +79,65 @@ def split_documents(docs, chunk_size=1000, chunk_overlap=0):
     
 
 # Create embeddings and add to a vector DB
-def create_vector_db(chunks, base_url, api_key):
+def create_vector_store(chunks, persist_directory=PERSISTENT_DIR):
     """Create and persist ChromaDB vector DB"""
     print(f"Creating embeddings and storing it in Chroma DB")
 
     embedding_model = OpenAIEmbeddings(
         model=EMBEDDING_MODEL,
-        base_url=base_url,
-        api_key=api_key,
+        base_url=OPENAI_API_URL,
+        api_key=OPENAI_API_KEY,
         check_embedding_ctx_length=False
     )
 
     print("Adding Embeddings to the vector db")
-    
-    vector_db = Chroma.from_documents(
+
+    # For Cloud Integration
+    # vector_store = Chroma.from_documents(
+    #     documents=chunks,
+    #     embedding=embedding_model,
+    #     collection_name=CHROMA_COLLECTION_NAME,
+    #     chroma_cloud_api_key=CHROMA_API_KEY,
+    #     tenant=CHROMA_TENANT,
+    #     database=CHROMA_DATABASE,
+    #     collection_metadata={"hnsw:space": "cosine"}
+    # )
+
+    # For Local Storage
+    vector_store = Chroma.from_documents(
         documents=chunks,
         embedding=embedding_model,
         collection_name=CHROMA_COLLECTION_NAME,
-        chroma_cloud_api_key=CHROMA_API_KEY,
-        tenant=CHROMA_TENANT,
-        database=CHROMA_DATABASE
+        persist_directory=persist_directory,
+        collection_metadata={"hnsw:space": "cosine"}
     )
 
     print("Finish adding embeddings to DB")
-    return vector_db
+    return vector_store
 
 
 
 def main():
     """Main ingestion Pipeline"""
     print("Running Main Pipeline")
+
+    if os.path.exists(PERSISTENT_DIR):
+        print("Vector DB already exists. No need to re-process documents")
+        embedding_model = OpenAIEmbeddings(
+            model=EMBEDDING_MODEL,
+            base_url=OPENAI_API_URL,
+            api_key=OPENAI_API_KEY,
+            check_embedding_ctx_length=False
+        )
+
+        vector_store = Chroma(
+            persist_directory=PERSISTENT_DIR,
+            embedding_function=embedding_model,
+            collection_metadata={"hnsw:space": "cosine"}
+        )
+
+        return vector_store
+    
 
     # Loading docs
     docs = load_documents(DOCS_PATH)
@@ -116,7 +146,7 @@ def main():
     chunks = split_documents(docs)
 
     # Create embeddings and store in vector db
-    vector_db = create_vector_db(chunks, OPENAI_API_URL, OPENAI_API_KEY)
+    vector_store = create_vector_store(chunks)
 
 if __name__ == "__main__":
     main()
