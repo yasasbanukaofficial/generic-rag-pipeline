@@ -1,0 +1,31 @@
+Retrieval-Augmented Generation (RAG)
+
+RAG is a way to make a language model answer from your own documents. Instead of relying only on what the model learned during training, the system first finds useful text in a document store and then gives that text to the model as context.
+
+Why use RAG
+
+A language model has a fixed knowledge cutoff and does not know about your private files. RAG lets you add new information without retraining the model. You can update the documents, and the answers follow. It also makes answers easier to check, because the source file can be shown with each piece of text.
+
+The three steps
+
+1. Ingestion. The documents are read, split into smaller pieces called chunks, turned into embeddings, and saved in a vector database.
+2. Retrieval. When a user asks a question, the question is turned into an embedding too. The database returns the chunks that are closest in meaning to the question.
+3. Generation. The retrieved chunks are added to the system message as context. The user question is sent as a user message. The model writes an answer using that context.
+
+What is an embedding
+
+An embedding is a list of numbers that represents the meaning of a piece of text. Text with similar meaning gets numbers that are close together. This is why a search can find a relevant passage even when the words do not match exactly.
+
+Why chunking matters
+
+A whole book is too large to send to a model in one prompt. Splitting it into chunks lets the system pick only the parts that matter. Chunks need to be small enough to be focused, but large enough to keep the idea intact. A small overlap between chunks helps when an idea is cut at a boundary.
+
+Why the prompt matters
+
+The model can still guess or use outside knowledge. A good system prompt tells it to answer only from the given context and to say it does not know when the answer is missing. This is often called grounded generation or context stuffing.
+
+Try asking these questions
+
+- What is an embedding?
+- Why do we split documents into chunks?
+- What happens if the answer is not in the context?

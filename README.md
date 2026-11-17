@@ -182,7 +182,8 @@ The assistant rules say: answer only from the context, say "I don't know" if the
 
 ```text
 .
-├── docs/                    # Your documents go here
+├── docs/
+│   └── sample.txt           # Shared sample document, other files stay local
 ├── db/
 │   └── chroma_db/           # Saved embeddings, git-ignored
 ├── src/rag_pipeline/
@@ -252,14 +253,18 @@ Fill in your API key, base URL, embedding model, chat model, and collection name
 
 ### 4. Add documents
 
-Put your files in `docs/`:
+The repo includes `docs/sample.txt`, a short text about how RAG works. Run the pipeline with that file first to check everything works.
+
+Add your own files to `docs/`:
 
 ```text
 docs/
-├── 01_example_document.txt
-├── 02_another_document.txt
+├── sample.txt
+├── my_notes.txt
 └── ...
 ```
+
+Only `sample.txt` is shared by git. Your other documents stay on your machine. Because ingestion skips a database that already exists, delete `db/chroma_db` after adding new files so they get indexed.
 
 ---
 

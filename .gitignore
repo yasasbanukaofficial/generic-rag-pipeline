@@ -15,3 +15,7 @@ wheels/
 
 # db
 db/
+
+# docs: only the sample file is shared, your own documents stay local
+docs/*
+!docs/sample.txt
