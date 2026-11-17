@@ -120,8 +120,8 @@ def create_vector_store(chunks, persist_directory=PERSISTENT_DIR):
 
 
 def main():
-    """Main ingestion Pipeline"""
-    print("Running Main Pipeline")
+    """Ingestion Pipeline"""
+    print("Running ingestion Pipeline")
 
     if os.path.exists(PERSISTENT_DIR):
         print("Vector DB already exists. No need to re-process documents")
@@ -145,7 +145,7 @@ def main():
     docs = load_documents(DOCS_PATH)
 
     # Splitting into chunks
-    chunks = split_documents(docs)
+    chunks = split_documents(docs, chunk_overlap=200)
 
     # Create embeddings and store in vector db
     vector_store = create_vector_store(chunks)
