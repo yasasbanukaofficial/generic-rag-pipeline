@@ -1,7 +1,7 @@
 [project]
 name = "rag-pipeline"
 version = "0.1.0"
-description = "Add your description here"
+description = "A simple retrieval-augmented generation pipeline"
 readme = "README.md"
 authors = [
     { name = "Yasas Banu", email = "yixbinfo@gmail.com" }

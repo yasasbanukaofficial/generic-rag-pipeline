@@ -1,14 +1,14 @@
-# Battlex RAG Pipeline
+# RAG Pipeline
 
-A simple RAG (Retrieval-Augmented Generation) system for the BattleX docs.
+A simple RAG (Retrieval-Augmented Generation) system for your documents.
 
 It reads the files in `docs/`, saves them as embeddings in a local ChromaDB database, finds the parts that match a question, and writes an answer using only those parts.
 
 There are three steps:
 
-1. **Ingestion**: read the docs, split them into chunks, and save them.
-2. **Retrieval**: find the chunks that best match the question.
-3. **AI generation**: give those chunks to a chat model and get an answer.
+1. **Ingestion.** Read the docs, split them into chunks, and save them.
+2. **Retrieval.** Find the chunks that best match the question.
+3. **AI generation.** Give those chunks to a chat model and get an answer.
 
 ---
 
@@ -152,7 +152,7 @@ sequenceDiagram
 - Put the question in a **user** message.
 - Send both messages to the chat model and print the answer.
 
-**Prompting type:** context stuffing, also called grounded prompting. We put the retrieved chunks straight into the system message so the model answers only from them. No examples are given, so it is also a zero-shot prompt.
+**Prompting type.** Context stuffing, also called grounded prompting. We put the retrieved chunks straight into the system message so the model answers only from them. No examples are given, so it is also a zero-shot prompt.
 
 The messages sent to the model look like this:
 
@@ -170,11 +170,11 @@ The assistant rules say: answer only from the context, say "I don't know" if the
 ## Tech Stack
 
 - **Python** 3.10+
-- **LangChain**: connects the steps
-- **Docling**: reads the documents
-- **OpenAI-style API**: makes embeddings and writes answers
-- **ChromaDB**: stores the embeddings on your computer
-- **uv**: manages the Python environment
+- **LangChain** connects the steps
+- **Docling** reads the documents
+- **OpenAI-style API** makes embeddings and writes answers
+- **ChromaDB** stores the embeddings on your computer
+- **uv** manages the Python environment
 
 ---
 
@@ -224,8 +224,8 @@ The assistant rules say: answer only from the context, say "I don't know" if the
 ### 1. Clone the repo
 
 ```bash
-git clone https://github.com/yasasbanukaofficial/battlex-rag-pipeline.git
-cd battlex-rag-pipeline
+git clone https://github.com/<your-username>/rag-pipeline.git
+cd rag-pipeline
 ```
 
 ### 2. Install dependencies
@@ -256,8 +256,8 @@ Put your files in `docs/`:
 
 ```text
 docs/
-├── 01_platform_overview_and_architecture.txt
-├── 02_authentication_and_user_security.txt
+├── 01_example_document.txt
+├── 02_another_document.txt
 └── ...
 ```
 
@@ -292,21 +292,21 @@ The `rag-pipeline` command in `pyproject.toml` is still a placeholder. Use the c
 
 ## Change things
 
-- **New documents**: add files to `docs/`, then delete `db/chroma_db` to rebuild.
-- **Chunk size**: change it in `ingestion/chunker.py`.
-- **Number of chunks used**: change `TOP_K` in `retrieval/retriever.py` (default 6).
-- **Assistant rules**: edit `DEFAULT_SYSTEM_PROMPT` in `generation/prompt.py`.
-- **Models**: change `EMBEDDING_MODEL` or `AI_MODEL` in `.env`.
-- **Save location**: change `PERSISTENT_DIR` in `vectorstore.py`.
+- **New documents.** Add files to `docs/`, then delete `db/chroma_db` to rebuild.
+- **Chunk size.** Change it in `ingestion/chunker.py`.
+- **Number of chunks used.** Change `TOP_K` in `retrieval/retriever.py` (default 6).
+- **Assistant rules.** Edit `DEFAULT_SYSTEM_PROMPT` in `generation/prompt.py`.
+- **Models.** Change `EMBEDDING_MODEL` or `AI_MODEL` in `.env`.
+- **Save location.** Change `PERSISTENT_DIR` in `vectorstore.py`.
 
 ---
 
 ## If something goes wrong
 
-- **`docs` folder not found**: create a `docs` folder in the project root.
-- **No files found**: add at least one document to `docs/`.
-- **"Vector DB already exists"**: normal. Delete `db/chroma_db` if you want to rebuild it.
-- **"KeyError" for a setting**: copy `.env.example` to `.env`. Every key must be there, even empty ones.
-- **No chunks found**: build the database first and check that the collection name matches.
-- **Answer says "I don't know"**: the needed text was not in the chunks. Try more chunks or smaller chunks.
-- **API errors**: check your key, address, and model names.
+- **docs folder not found.** Create a `docs` folder in the project root.
+- **No files found.** Add at least one document to `docs/`.
+- **Vector DB already exists.** This is normal. Delete `db/chroma_db` if you want to rebuild it.
+- **KeyError for a setting.** Copy `.env.example` to `.env`. Every key must be there, even empty ones.
+- **No chunks found.** Build the database first and check that the collection name matches.
+- **Answer says "I don't know".** The needed text was not in the chunks. Try more chunks or smaller chunks.
+- **API errors.** Check your key, address, and model names.
