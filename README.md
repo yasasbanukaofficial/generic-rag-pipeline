@@ -1,84 +1,180 @@
 # Battlex RAG Pipeline
 
-A lightweight **RAG pipeline** that turns documentation from `docs/` into searchable vector embeddings stored in a local **ChromaDB** database, then retrieves the most relevant chunks for a user query.
+A simple RAG (Retrieval-Augmented Generation) system for the BattleX docs.
 
-The project has two stages:
+It reads the files in `docs/`, saves them as embeddings in a local ChromaDB database, finds the parts that match a question, and writes an answer using only those parts.
 
-- **Ingestion** (`src/rag_pipeline/ingestion_pipeline.py`) — load documents, split them into chunks, generate embeddings, and persist them in a vector database.
-- **Retrieval** (`src/rag_pipeline/retrieval_pipeline.py`) — embed a user query and search the persisted vector store.
+There are three steps:
+
+1. **Ingestion**: read the docs, split them into chunks, and save them.
+2. **Retrieval**: find the chunks that best match the question.
+3. **AI generation**: give those chunks to a chat model and get an answer.
 
 ---
 
 ## Pipeline Flow
 
 ```mermaid
+%%{init: {"theme": "dark", "themeVariables": {"background": "#0b1220", "primaryColor": "#1e293b", "primaryTextColor": "#ffffff", "primaryBorderColor": "#64748b", "textColor": "#ffffff", "lineColor": "#cbd5e1", "fontSize": "15px", "edgeLabelBackground": "#0b1220", "clusterBkg": "#0f172a", "clusterBorder": "#334155", "secondaryTextColor": "#ffffff", "tertiaryTextColor": "#ffffff"}}}%%
 flowchart LR
-    subgraph Ingestion Pipeline
-        A[Source Docs<br/>docs/*] --> B[Load Documents<br/>DoclingLoader]
-        B --> C[Chunking<br/>RecursiveCharacterTextSplitter<br/>chunk_size=1000, overlap=200]
-        C --> D[Chunked Data]
-        D --> E[Generate Embeddings<br/>OpenAI-compatible Embeddings API]
-        E --> F[Persist Vectors<br/>ChromaDB<br/>db/chroma_db]
+    subgraph A["Step 1: Ingestion"]
+        D["docs folder"] --> L["Read files"]
+        L --> C["Split into chunks"]
+        C --> E["Create embeddings"]
+        E --> V[("ChromaDB")]
     end
 
-    subgraph Retrieval Pipeline
-        G[User Query] --> H[Embed Query]
-        F --> I[Similarity Search<br/>k=6]
-        H --> I
-        I --> J[Relevant Chunks]
+    subgraph B["Step 2: Retrieval"]
+        Q["Your question"] --> S["Search ChromaDB"]
+        V --> S
+        S --> R["6 closest chunks"]
     end
+
+    subgraph F["Step 3: AI generation"]
+        R --> P["Add chunks to the rules"]
+        P --> M["Chat model"]
+        M --> O["Answer"]
+    end
+
+    classDef neutral fill:#1e293b,stroke:#64748b,color:#ffffff;
+    classDef ingest fill:#172554,stroke:#60a5fa,color:#ffffff;
+    classDef store fill:#422006,stroke:#fbbf24,color:#ffffff;
+    classDef retrieve fill:#2e1065,stroke:#c084fc,color:#ffffff;
+    classDef generate fill:#052e2b,stroke:#2dd4bf,color:#ffffff;
+    classDef answer fill:#064e3b,stroke:#34d399,color:#ffffff;
+
+    class D,Q neutral;
+    class L,C,E ingest;
+    class V store;
+    class S,R retrieve;
+    class P,M generate;
+    class O answer;
+
+    style A fill:#0f172a,stroke:#3b82f6,color:#ffffff;
+    style B fill:#0f172a,stroke:#a78bfa,color:#ffffff;
+    style F fill:#0f172a,stroke:#2dd4bf,color:#ffffff;
 ```
 
-**Ingestion flow:** `Docs -> Load -> Chunk -> Chunked Data -> Embeddings -> Local Vector DB`
+### Ingestion flow
 
-**Retrieval flow:** `Query -> Embedding -> Similarity Search -> Results`
+```mermaid
+%%{init: {"theme": "dark", "themeVariables": {"background": "#0b1220", "primaryColor": "#1e293b", "primaryTextColor": "#ffffff", "primaryBorderColor": "#64748b", "textColor": "#ffffff", "lineColor": "#cbd5e1", "fontSize": "15px", "edgeLabelBackground": "#0b1220"}}}%%
+flowchart LR
+    A["docs folder"] --> B["Read files"]
+    B --> C["Split into chunks"]
+    C --> D["Create embeddings"]
+    D --> E[("ChromaDB")]
+
+    classDef neutral fill:#1e293b,stroke:#64748b,color:#ffffff;
+    classDef ingest fill:#172554,stroke:#60a5fa,color:#ffffff;
+    classDef store fill:#422006,stroke:#fbbf24,color:#ffffff;
+
+    class A neutral;
+    class B,C,D ingest;
+    class E store;
+```
+
+### Retrieval flow
+
+```mermaid
+%%{init: {"theme": "dark", "themeVariables": {"background": "#0b1220", "primaryColor": "#1e293b", "primaryTextColor": "#ffffff", "primaryBorderColor": "#64748b", "textColor": "#ffffff", "lineColor": "#cbd5e1", "fontSize": "15px", "edgeLabelBackground": "#0b1220"}}}%%
+flowchart LR
+    A["Your question"] --> B["Search ChromaDB"]
+    B --> C["6 closest chunks"]
+
+    classDef neutral fill:#1e293b,stroke:#64748b,color:#ffffff;
+    classDef retrieve fill:#2e1065,stroke:#c084fc,color:#ffffff;
+
+    class A neutral;
+    class B,C retrieve;
+```
+
+### AI generation flow
+
+```mermaid
+%%{init: {"theme": "dark", "themeVariables": {"background": "#0b1220", "primaryColor": "#1e293b", "primaryTextColor": "#ffffff", "primaryBorderColor": "#64748b", "textColor": "#ffffff", "lineColor": "#cbd5e1", "fontSize": "15px", "edgeLabelBackground": "#0b1220"}}}%%
+flowchart LR
+    A["Chunks and rules"] --> B["System message"]
+    C["Your question"] --> D["User message"]
+    B --> E["Chat model"]
+    D --> E
+    E --> F["Answer"]
+
+    classDef source fill:#172554,stroke:#60a5fa,color:#ffffff;
+    classDef prompt fill:#052e2b,stroke:#2dd4bf,color:#ffffff;
+    classDef answer fill:#064e3b,stroke:#34d399,color:#ffffff;
+
+    class A,C source;
+    class B,D,E prompt;
+    class F answer;
+```
+
+### How one question travels through the system
+
+```mermaid
+%%{init: {"theme": "dark", "themeVariables": {"background": "#0b1220", "primaryTextColor": "#ffffff", "textColor": "#ffffff", "actorBkg": "#1e293b", "actorBorder": "#64748b", "actorTextColor": "#ffffff", "actorLineColor": "#cbd5e1", "signalColor": "#cbd5e1", "signalTextColor": "#ffffff", "labelBoxBkgColor": "#1e293b", "labelBoxBorderColor": "#64748b", "labelTextColor": "#ffffff", "noteBkgColor": "#1e293b", "noteBorderColor": "#fbbf24", "noteTextColor": "#ffffff"}}}%%
+sequenceDiagram
+    participant U as You
+    participant App as App
+    participant DB as ChromaDB
+    participant AI as Chat model
+
+    U->>App: Ask a question
+    App->>DB: Find chunks close to the question
+    DB-->>App: 6 closest chunks
+    App->>AI: Rules plus chunks plus question
+    AI-->>App: Answer
+    App-->>U: Show the answer
+```
 
 ---
 
 ## How It Works
 
-### 1. Ingestion Pipeline
+### Step 1: Ingestion
 
-Implemented in `src/rag_pipeline/ingestion_pipeline.py`.
+- Read every file in the `docs` folder.
+- Split the text into chunks of 1000 characters, with 200 characters shared between chunks.
+- Turn each chunk into an embedding, which is a list of numbers that represents its meaning.
+- Save the embeddings in ChromaDB at `db/chroma_db`.
+- If the database already exists, skip this step and open it instead.
 
-#### Load documents
-- Lists all files in `docs/` and loads them with `DoclingLoader` (`langchain-docling`), which replaced the sunset `langchain-community` `DirectoryLoader`/`TextLoader` pair.
-- Keeps each document's `page_content` and a `source` metadata field.
-- Fails early if `docs/` is missing or empty.
-- Prints a preview of the first two documents (source, length, sample content, metadata).
+### Step 2: Retrieval
 
-#### Split documents into chunks
-- Uses `RecursiveCharacterTextSplitter` with `chunk_size=1000` and `chunk_overlap=200` in `main()`.
-- Produces embedding-friendly chunks while preserving source metadata.
-- Prints sample chunks for quick inspection.
+- Turn the question into an embedding using the same embedding model.
+- Search ChromaDB for chunks that are closest in meaning to the question.
+- Take the 6 best matches. Each one also carries the name of the file it came from.
 
-#### Create embeddings and persist the vector store
-- Initializes `langchain_openai.OpenAIEmbeddings` with the configured `base_url`, `api_key`, and `model` (`check_embedding_ctx_length=False`).
-- Writes chunk embeddings into a **local** ChromaDB collection at `db/chroma_db` via `langchain_chroma.Chroma.from_documents(...)`.
-- Stores vectors with cosine distance metadata (`hnsw:space = cosine`).
-- If `db/chroma_db` already exists, re-processing is skipped and the existing store is opened instead.
-- ChromaDB Cloud configuration is kept as commented-out alternative blocks in the source.
+### Step 3: AI generation
 
-### 2. Retrieval Pipeline
+- Put the assistant rules in a **system** message.
+- Add the 6 chunks under `Context:` to that same message.
+- Put the question in a **user** message.
+- Send both messages to the chat model and print the answer.
 
-Implemented in `src/rag_pipeline/retrieval_pipeline.py`.
+**Prompting type:** context stuffing, also called grounded prompting. We put the retrieved chunks straight into the system message so the model answers only from them. No examples are given, so it is also a zero-shot prompt.
 
-- Prompts for a query with `Search:`.
-- Builds the same `OpenAIEmbeddings` model and opens the local ChromaDB collection (`db/chroma_db`, name from `CHROMA_COLLECTION_NAME`).
-- Runs `vector_store.similarity_search(query, k=6)`.
-- Prints the page content of the six most similar chunks.
-- Requires the ingestion pipeline to have created the local vector store first.
+The messages sent to the model look like this:
+
+```python
+[
+    {"role": "system", "content": f"{system_prompt} \n\nContext:\n\n{context}"},
+    {"role": "user", "content": user_query}
+]
+```
+
+The assistant rules say: answer only from the context, say "I don't know" if the answer is not there, keep it short, and use plain text.
 
 ---
 
 ## Tech Stack
 
 - **Python** 3.10+
-- **LangChain** (`langchain`, `langchain-text-splitters`)
-- **Docling** (`langchain-docling`, `marko`) for document loading
-- **OpenAI-compatible embeddings** (`langchain-openai`)
-- **ChromaDB** local vector store (`langchain-chroma`)
-- **uv** / `pyproject.toml` for dependency and project management
+- **LangChain**: connects the steps
+- **Docling**: reads the documents
+- **OpenAI-style API**: makes embeddings and writes answers
+- **ChromaDB**: stores the embeddings on your computer
+- **uv**: manages the Python environment
 
 ---
 
@@ -86,17 +182,27 @@ Implemented in `src/rag_pipeline/retrieval_pipeline.py`.
 
 ```text
 .
-├── docs/                         # Source documents to ingest
+├── docs/                    # Your documents go here
 ├── db/
-│   └── chroma_db/                # Local ChromaDB persistence (git-ignored)
-├── src/
-│   └── rag_pipeline/
-│       ├── __init__.py
-│       ├── ingestion_pipeline.py # Load, chunk, embed, and persist documents
-│       └── retrieval_pipeline.py # Query the persisted vector store
-├── .env.example                  # Environment variable template
-├── pyproject.toml                # Project metadata and dependencies
-├── uv.lock                       # Locked dependencies
+│   └── chroma_db/           # Saved embeddings, git-ignored
+├── src/rag_pipeline/
+│   ├── config.py            # Reads settings from .env
+│   ├── embeddings.py        # Builds the embedding model
+│   ├── vectorstore.py       # Saves and opens ChromaDB
+│   ├── ingestion/
+│   │   ├── loader.py        # Reads the files
+│   │   └── chunker.py       # Splits text into chunks
+│   ├── retrieval/
+│   │   └── retriever.py     # Finds the closest chunks
+│   ├── generation/
+│   │   ├── prompt.py        # Assistant rules and message format
+│   │   ├── llm.py           # Builds the chat model
+│   │   └── answer.py        # Gets the answer from the model
+│   └── scripts/
+│       └── pipeline.py      # Runs the whole flow
+├── .env.example             # Settings template
+├── pyproject.toml           # Project and dependencies
+├── uv.lock
 └── README.md
 ```
 
@@ -104,119 +210,103 @@ Implemented in `src/rag_pipeline/retrieval_pipeline.py`.
 
 ## Prerequisites
 
-- **Python 3.10+**
-- **[uv](https://docs.astral.sh/uv/)** (recommended)
-- An **OpenAI-compatible embeddings endpoint** (e.g. OpenAI or OpenRouter) with API key, base URL, and model name
-- One or more documents in the `docs/` directory (Docling-supported formats, e.g. `.txt`)
-- No external database service is needed for the default local ChromaDB setup
+- Python 3.10+
+- [uv](https://docs.astral.sh/uv/)
+- An API key and base URL from an OpenAI-style provider, for example OpenAI or OpenRouter
+- An embedding model and a chat model from that provider
+- At least one document in `docs/`
+- No database server needed, ChromaDB saves to a local folder
 
 ---
 
 ## Setup
 
-### 1. Clone the repository
+### 1. Clone the repo
 
 ```bash
 git clone https://github.com/yasasbanukaofficial/battlex-rag-pipeline.git
 cd battlex-rag-pipeline
 ```
 
-### 2. Set up the environment and install dependencies
-
-#### Option A: Quick setup with `uv sync` (recommended)
+### 2. Install dependencies
 
 ```bash
 uv sync
 ```
 
-#### Option B: Manual setup with `uv`
+Or create the environment yourself:
 
 ```bash
 uv venv .venv
-source .venv/bin/activate  # On Windows (PowerShell): .venv\Scripts\Activate.ps1
+source .venv/bin/activate
 uv sync
 ```
 
-### 3. Configure environment variables
-
-Copy the sample file and fill in your values:
+### 3. Set your settings
 
 ```bash
 cp .env.example .env
 ```
 
-Set your embeddings provider settings (OpenAI, OpenRouter, or another OpenAI-compatible provider) and the ChromaDB collection name. The `CHROMA_API_KEY`, `CHROMA_TENANT`, and `CHROMA_DATABASE` entries are only needed if you switch to the commented-out ChromaDB Cloud integration.
+Fill in your API key, base URL, embedding model, chat model, and collection name. Leave the Chroma cloud values empty for local use. All keys must exist in `.env`, even if some are empty.
 
-### 4. Add source documents
+### 4. Add documents
 
-Place the documents you want to ingest into `docs/`:
+Put your files in `docs/`:
 
 ```text
 docs/
-├── 01_example_document.txt
-├── 02_another_document.txt
+├── 01_platform_overview_and_architecture.txt
+├── 02_authentication_and_user_security.txt
 └── ...
 ```
 
 ---
 
-## Commands
-
-| Command | Description |
-|---|---|
-| `uv run python -m rag_pipeline.ingestion_pipeline` | Load docs, chunk, embed, and persist to `db/chroma_db` (skipped if the DB already exists) |
-| `uv run python -m rag_pipeline.retrieval_pipeline` | Prompt for a query and print the top 6 matching chunks |
-
-With an activated virtual environment, the `uv run` prefix can be dropped:
+## Run it
 
 ```bash
-python -m rag_pipeline.ingestion_pipeline
-python -m rag_pipeline.retrieval_pipeline
+uv run python -m rag_pipeline.scripts.pipeline
 ```
 
-### Expected output
+You will see the `Search:` prompt. Type a question and press Enter. The first run builds the database, and later runs reuse it.
 
-**Ingestion:**
-- Pipeline start message
-- Documents loaded from `docs/` and a preview of sample documents
-- Chunking details and sample chunks
-- Embedding creation and ChromaDB write confirmation (or a notice that the vector DB already exists)
-
-**Retrieval:**
-- `Search:` prompt and query embedding message
-- Page content of the six most similar chunks
+The `rag-pipeline` command in `pyproject.toml` is still a placeholder. Use the command above.
 
 ---
 
-## Environment Variables Reference
+## Settings
 
-| Variable | Required | Description |
+| Variable | Needed | What it is |
 |---|---|---|
-| `OPENAI_API_KEY` | Yes | API key for the embeddings provider (OpenAI, OpenRouter, or compatible) |
-| `OPENAI_API_URL` | Yes | Base URL for the OpenAI-compatible embeddings API |
-| `EMBEDDING_MODEL` | Yes | Embedding model identifier/name |
-| `CHROMA_COLLECTION_NAME` | Yes | Target collection for stored vectors |
-| `CHROMA_API_KEY` | No | ChromaDB Cloud API key (only for the commented-out cloud integration) |
-| `CHROMA_TENANT` | No | ChromaDB Cloud tenant ID (only for the commented-out cloud integration) |
-| `CHROMA_DATABASE` | No | ChromaDB Cloud database name (only for the commented-out cloud integration) |
+| `OPENAI_API_KEY` | Yes | Your API key |
+| `OPENAI_API_URL` | Yes | Provider address, for example `https://api.openai.com/v1` or `https://openrouter.ai/api/v1` |
+| `EMBEDDING_MODEL` | Yes | Model that turns text into embeddings |
+| `AI_MODEL` | Yes | Chat model that writes the answer |
+| `CHROMA_COLLECTION_NAME` | Yes | Name of the ChromaDB collection |
+| `CHROMA_API_KEY` | Leave empty locally | Only used for ChromaDB Cloud |
+| `CHROMA_TENANT` | Leave empty locally | Only used for ChromaDB Cloud |
+| `CHROMA_DATABASE` | Leave empty locally | Only used for ChromaDB Cloud |
 
 ---
 
-## Customization
+## Change things
 
-- **Input folder:** update `DOCS_PATH` in `ingestion_pipeline.py`; the `path` argument of `load_documents(...)` only affects the directory existence check.
-- **Chunking:** adjust `chunk_size` and `chunk_overlap` in `split_documents(...)`; `main()` currently uses `chunk_overlap=200`.
-- **Persistence location:** change `PERSISTENT_DIR` (`db/chroma_db`) in both pipelines. Delete that directory to force re-ingestion.
-- **Retrieval depth:** change `k=6` in `similarity_search(...)` in `retrieval_pipeline.py`.
-- **Cloud storage:** uncomment the ChromaDB Cloud blocks in both pipeline files and replace the `persist_directory` arguments with the cloud credentials.
+- **New documents**: add files to `docs/`, then delete `db/chroma_db` to rebuild.
+- **Chunk size**: change it in `ingestion/chunker.py`.
+- **Number of chunks used**: change `TOP_K` in `retrieval/retriever.py` (default 6).
+- **Assistant rules**: edit `DEFAULT_SYSTEM_PROMPT` in `generation/prompt.py`.
+- **Models**: change `EMBEDDING_MODEL` or `AI_MODEL` in `.env`.
+- **Save location**: change `PERSISTENT_DIR` in `vectorstore.py`.
 
 ---
 
-## Troubleshooting
+## If something goes wrong
 
-- **`FileNotFoundError: The directory docs doesn't exist`** — create a `docs/` folder in the project root.
-- **`No .txt files are found...`** — add at least one supported document to `docs/`; this check only tests whether files were loaded.
-- **`Vector DB already exists. No need to re-process documents`** — expected when `db/chroma_db` is present; delete it to re-ingest updated documents.
-- **Retrieval returns no results or fails to open the store** — run the ingestion pipeline first and confirm `CHROMA_COLLECTION_NAME` matches the collection used during ingestion.
-- **Environment variable/key errors** — verify all required variables are set in `.env`.
-- **Embedding or Chroma connection issues** — check API keys, endpoint URL, collection name, network access, and model compatibility.
+- **`docs` folder not found**: create a `docs` folder in the project root.
+- **No files found**: add at least one document to `docs/`.
+- **"Vector DB already exists"**: normal. Delete `db/chroma_db` if you want to rebuild it.
+- **"KeyError" for a setting**: copy `.env.example` to `.env`. Every key must be there, even empty ones.
+- **No chunks found**: build the database first and check that the collection name matches.
+- **Answer says "I don't know"**: the needed text was not in the chunks. Try more chunks or smaller chunks.
+- **API errors**: check your key, address, and model names.
