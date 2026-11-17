@@ -1,3 +1,5 @@
+from langchain_core.messages import HumanMessage, SystemMessage
+
 DEFAULT_SYSTEM_PROMPT = """\
 You are a helpful AI assistant.
 Answer the user's question using only the context below.
@@ -28,6 +30,6 @@ def combine_prompt(user_query, chunks, system_prompt=None):
     )
     
     return [
-        {"role": "system", "content": f"{system_prompt} \n\nContext:\n\n{context}"},
-        {"role": "user", "content": user_query}
+        SystemMessage(f"{system_prompt} \n\nContext:\n\n{context}"),
+        HumanMessage(user_query)
     ]
