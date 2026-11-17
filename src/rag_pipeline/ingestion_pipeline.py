@@ -1,7 +1,10 @@
 import os
 
 from dotenv import load_dotenv
-from langchain_community.document_loaders import TextLoader, DirectoryLoader
+from pathlib import Path
+
+from langchain_docling.loader import DoclingLoader
+from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_chroma import Chroma
@@ -30,14 +33,13 @@ def load_documents(path="docs"):
     if not os.path.exists(path):
         raise FileNotFoundError(f"The directory {path} doesn't exist. Please try again by creating it!")
 
-    loader = DirectoryLoader(
-        path,
-        glob="*.txt",
-        loader_cls=TextLoader,
-        show_progress=True
-    )
+    files = [f for f in Path(DOCS_PATH).iterdir() if f.is_file()]
 
-    docs = loader.load()
+    loaded_docs = DoclingLoader(
+        file_path=files,
+    ).load()
+
+    docs = [Document(page_content=d.page_content, metadata={"source": str(d.metadata.get("source", ""))}) for d in loaded_docs]
 
     if len(docs) == 0:
         raise FileNotFoundError(f"No .txt files are found at the path of {path}. Please add the relevant documents before proceeding!")
