@@ -31,6 +31,7 @@ def main():
         check_embedding_ctx_length=False
     )
 
+    # Takes the user input as query   
     query = input("Search:  ")
     print("Converting user query to vector embedding...")
 
@@ -53,11 +54,13 @@ def main():
         collection_metadata={"hnsw:space": "cosine"}
     )
 
+    # Search through the vector DB
     results = vector_store.similarity_search(
         query,
         k=6
     )
 
+    # Prints the retreived results
     for res in results:
         print(res.page_content)
 
