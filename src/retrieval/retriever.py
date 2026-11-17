@@ -1,24 +1,17 @@
-from vectorstore import open_vector_store
+# Constants
+TOP_K = 6
 
-
-def main(query: str):
+# Retrieve the most relevant chunks for a user query
+def retrieve_chunks(query: str, vector_store, k: int = TOP_K):
     """Retrieval Pipeline"""
-    print("Running retrieval pipeline")
+    print(f"Retrieving chunks for the query: {query}")
+
+    if not query.strip():
+        raise ValueError("The query cannot be empty. Please provide a search term.")
 
     print("Converting user query to vector embedding...")
 
-    vector_store = open_vector_store()
-
     # Search through the vector DB
-    results = vector_store.similarity_search(
-        query,
-        k=6
-    )
+    results = vector_store.similarity_search(query, k=k)
 
-    # Prints the retreived results
-    for res in results:
-        print(res.page_content)
-
-
-if __name__ == "__main__":
-    main()
+    return results

@@ -1,8 +1,9 @@
 import os
-from pathlib import Path
 
 from ingestion.loader import DOCS_PATH, load_documents
 from ingestion.chunker import split_documents
+
+from retrieval.retriever import retrieve_chunks
 from vectorstore import PERSISTENT_DIR, create_vector_store, open_vector_store
 
 
@@ -33,7 +34,7 @@ def ask(vector_store, query):
     """Ask a question and retrieve relevant chunks."""
     print("🔍 Searching the vector store...")
 
-    results = vector_store.similarity_search(query, k=6)
+    results = retrieve_chunks(query, vector_store)
     print(f"📚 Retrieved {len(results)} chunks")
 
     for i, result in enumerate(results, start=1):
